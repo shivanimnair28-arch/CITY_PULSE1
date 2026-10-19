@@ -1,0 +1,21 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>CityPulse — Submit a Report</title>
+<style>body{font-family:-apple-system,"Segoe UI",sans-serif;background:#0A0E1A;color:#E4E9F2;max-width:640px;margin:0 auto;padding:24px}h1{font-size:20px}label{display:block;font-size:12px;color:#6B7A99;text-transform:uppercase;margin-top:14px}input,select,textarea{width:100%;padding:10px;margin-top:6px;background:#1A2333;border:1px solid #232D42;color:#E4E9F2;border-radius:8px;font:inherit}button{margin-top:18px;padding:11px 18px;border:0;border-radius:8px;background:linear-gradient(135deg,#22D3EE,#A78BFA);font-weight:700;cursor:pointer}.note{font-size:12px;color:#6B7A99;margin-top:14px;line-height:1.5}#msg{margin-top:14px;font-size:13px}.hp{position:absolute;left:-9999px}</style></head><body>
+<h1>Submit a city report</h1><p class="note">Reports are anonymous and are <b>not public</b> until an authority reviews and approves them. Do not include names, phone numbers or number plates.</p>
+<label>Type</label><select id="type"><option value="incident">Incident (accident, heavy traffic, flooding…)</option><option value="planned_work">Planned work (permit required)</option><option value="advisory">Advisory</option></select>
+<label>Category</label><select id="category"></select>
+<label>Title</label><input id="title" maxlength="120"><label>Description</label><textarea id="description" rows="4" maxlength="1000"></textarea>
+<label>Road</label><input id="road" maxlength="120"><label>Area</label><input id="area" maxlength="80">
+<label>Latitude (optional)</label><input id="lat" type="number" step="0.0001"><label>Longitude (optional)</label><input id="lon" type="number" step="0.0001">
+<div id="pw" style="display:none"><label>Permit / file reference</label><input id="permitRef"><label>Work starts</label><input id="activeFrom" type="datetime-local"><label>Work ends</label><input id="activeUntil" type="datetime-local"><label>Suggested alternative route</label><input id="alternative" maxlength="200"></div>
+<input class="hp" id="website" tabindex="-1" autocomplete="off"><button id="go">Submit</button><div id="msg"></div>
+<script>
+const CATS={incident:['accident','heavy_traffic','flooding','road_damage','streetlight','water','other'],planned_work:['road_construction','utility_work','maintenance','event'],advisory:['general']};
+const $=id=>document.getElementById(id);
+function fill(){ $('category').innerHTML=CATS[$('type').value].map(c=>`<option>${c}</option>`).join(''); $('pw').style.display=$('type').value==='planned_work'?'block':'none'; }
+$('type').onchange=fill; fill();
+$('go').onclick=async()=>{ const b={}; ['type','category','title','description','road','area','lat','lon','permitRef','alternative','website'].forEach(k=>b[k]=$(k).value);
+  ['activeFrom','activeUntil'].forEach(k=>{ if($(k).value) b[k]=new Date($(k).value).toISOString(); });
+  if(b.lat==='')delete b.lat; if(b.lon==='')delete b.lon;
+  const r=await fetch('/api/reports',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}); const j=await r.json();
+  $('msg').textContent=r.ok?`${j.message} Reference: ${j.id}`:(j.errors||[j.error]).join('; '); };
+</script></body></html>

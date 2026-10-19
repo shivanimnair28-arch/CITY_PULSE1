@@ -1,0 +1,3 @@
+# Demo Script   (Owner: T4)  — target 8–10 min
+1. Open CityPulse, show city + live status chip.  2. Environment: weather + air quality, point out "Model estimate" tags.  3. Mobility: TomTom flow, derived congestion, evidence labels.  4. Submit a report on the public form (planned work with permit).  5. Authority console: approve it.  6. Dashboard: notice appears with reason + alternative route + alert.  7. Heavy traffic vs accident: show the evidence ladder.  8. Simulator on live baseline + measured error.  9. System Quality page (uptime, trust).  10. **Failure demo:** network off → stale labels, nothing invented.  11. Generate report.
+Rehearsal log: date / time taken / problems / fixed?

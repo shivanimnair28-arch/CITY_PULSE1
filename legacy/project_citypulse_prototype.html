@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CityPulse — Intelligent Smart City Dashboard</title>
+<style>
+  :root{
+    --bg:#0A0E1A;
+    --surface:#121826;
+    --surface-2:#1A2333;
+    --border:#232D42;
+    --cyan:#22D3EE;
+    --amber:#F5A623;
+    --green:#34D399;
+    --red:#F87171;
+    --violet:#A78BFA;
+    --text:#E4E9F2;
+    --text-muted:#6B7A99;
+    --font-display: -apple-system, "Segoe UI", "Helvetica Neue", sans-serif;
+    --font-mono: "SF Mono", "Roboto Mono", "Cascadia Mono", Consolas, monospace;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--font-display);
+    display:flex;
+    min-height:100vh;
+    overflow-x:hidden;
+  }
+  ::-webkit-scrollbar{width:8px; height:8px;}
+  ::-webkit-scrollbar-thumb{background:var(--surface-2); border-radius:4px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+
+  /* ---------- SIDEBAR ---------- */
+  .sidebar{
+    width:236px;
+    flex-shrink:0;
+    background:var(--surface);
+    border-right:1px solid var(--border);
+    display:flex;
+    flex-direction:column;
+    height:100vh;
+    position:sticky;
+    top:0;
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:22px 20px 18px 20px;
+    border-bottom:1px solid var(--border);
+  }
+  .brand-mark{
+    width:30px; height:30px;
+    border-radius:8px;
+    background:linear-gradient(135deg, var(--cyan), var(--violet));
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+  }
+  .brand-mark svg{width:16px; height:16px;}
+  .brand-text{font-weight:700; font-size:16.5px; letter-spacing:0.2px;}
+  .brand-sub{font-size:10px; color:var(--text-muted); font-family:var(--font-mono); letter-spacing:0.5px; text-transform:uppercase; margin-top:1px;}
+
+  nav{flex:1; padding:14px 12px; overflow-y:auto;}
+  .nav-group-label{
+    font-size:10px; letter-spacing:1.2px; text-transform:uppercase;
+    color:var(--text-muted); padding:14px 10px 6px 10px; font-family:var(--font-mono);
+  }
+  .nav-item{
+    display:flex; align-items:center; gap:11px;
+    padding:9px 10px; border-radius:8px;
+    color:var(--text-muted); text-decoration:none;
+    font-size:13.5px; font-weight:500;
+    cursor:pointer; transition:background .15s, color .15s;
+    margin-bottom:2px; border-left:2px solid transparent;
+  }
+  .nav-item svg{width:16px; height:16px; flex-shrink:0; opacity:0.85;}
+  .nav-item:hover{background:var(--surface-2); color:var(--text);}
+  .nav-item.active{
+    background:rgba(34,211,238,0.08);
+    color:var(--cyan);
+    border-left:2px solid var(--cyan);
+  }
+  .sidebar-foot{
+    padding:14px 20px; border-top:1px solid var(--border);
+    font-size:10.5px; color:var(--text-muted); font-family:var(--font-mono);
+  }
+
+  /* ---------- MAIN ---------- */
+  .main{flex:1; min-width:0; display:flex; flex-direction:column;}
+  .topbar{
+    height:64px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:0 28px;
+    border-bottom:1px solid var(--border);
+    background:rgba(18,24,38,0.6);
+    backdrop-filter:blur(6px);
+    position:sticky; top:0; z-index:5;
+  }
+  .topbar-left{display:flex; align-items:center; gap:16px;}
+  .page-title{font-size:16px; font-weight:700;}
+  .page-sub{font-size:11.5px; color:var(--text-muted);}
+  .pulse-strip{
+    flex:1; max-width:380px; height:34px; margin:0 26px;
+    display:flex; align-items:center;
+    background:var(--surface); border:1px solid var(--border); border-radius:8px;
+    padding:0 10px; gap:8px;
+  }
+  .pulse-dot{width:7px; height:7px; border-radius:50%; background:var(--green); flex-shrink:0; box-shadow:0 0 8px var(--green); animation:blink 1.6s infinite;}
+  @keyframes blink{0%,100%{opacity:1;} 50%{opacity:.35;}}
+  .pulse-strip svg{flex:1; height:26px;}
+  .topbar-right{display:flex; align-items:center; gap:18px;}
+  .clock{font-family:var(--font-mono); font-size:13px; color:var(--text-muted);}
+  .avatar{
+    width:32px; height:32px; border-radius:50%;
+    background:linear-gradient(135deg, var(--amber), var(--red));
+    display:flex; align-items:center; justify-content:center;
+    font-size:12px; font-weight:700; color:#0A0E1A;
+  }
+  .refresh-btn{
+    border:1px solid var(--border);
+    background:rgba(34,211,238,0.08);
+    color:var(--text);
+    padding:8px 12px;
+    border-radius:10px;
+    font-size:12px;
+    cursor:pointer;
+    transition:background .2s, transform .2s, border-color .2s;
+  }
+  .refresh-btn:hover{background:rgba(34,211,238,0.14); transform:translateY(-1px); border-color:var(--cyan);}
+
+  .content{padding:26px 28px 60px 28px; flex:1;}
+  .section{display:none; animation:fadein .25s ease;}
+  .section.active{display:block;}
+  @keyframes fadein{from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);}}
+
+  .section-head{margin-bottom:18px;}
+  .section-head h1{font-size:20px; font-weight:700;}
+  .section-head p{font-size:12.5px; color:var(--text-muted); margin-top:3px;}
+
+  /* ---------- CARDS ---------- */
+  .cards-grid{
+    display:grid; grid-template-columns:repeat(auto-fit, minmax(210px,1fr));
+    gap:14px; margin-bottom:22px;
+  }
+  .card{
+    background:var(--surface); border:1px solid var(--border); border-radius:12px;
+    padding:16px 18px;
+    position:relative; overflow:hidden;
+  }
+  .card::before{
+    content:''; position:absolute; top:0; left:0; width:3px; height:100%;
+    background:var(--accent, var(--cyan));
+  }
+  .card-label{font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.6px; font-family:var(--font-mono);}
+  .card-value{font-size:26px; font-weight:700; font-family:var(--font-mono); margin-top:8px; display:flex; align-items:baseline; gap:6px;}
+  .card-value span.unit{font-size:13px; color:var(--text-muted); font-weight:500;}
+  .card-delta{font-size:11.5px; margin-top:6px; font-weight:600;}
+  .up{color:var(--red);}
+  .down{color:var(--green);}
+  .flat{color:var(--text-muted);}
+
+  /* ---------- PANELS / CHARTS ---------- */
+  .panels-grid{display:grid; grid-template-columns:1.4fr 1fr; gap:14px; margin-bottom:14px;}
+  @media(max-width:980px){.panels-grid{grid-template-columns:1fr;}}
+  .panel{
+    background:var(--surface); border:1px solid var(--border); border-radius:12px;
+    padding:18px 20px;
+  }
+  .panel-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;}
+  .panel-title{font-size:13.5px; font-weight:700;}
+  .panel-tag{font-size:10px; font-family:var(--font-mono); color:var(--text-muted); background:var(--surface-2); padding:3px 8px; border-radius:20px;}
+  .spark{width:100%; height:150px; overflow:visible;}
+  .bar-chart{width:100%; height:150px;}
+  .legend{display:flex; gap:16px; margin-top:10px; font-size:11px; color:var(--text-muted);}
+  .legend span{display:flex; align-items:center; gap:6px;}
+  .dot{width:8px; height:8px; border-radius:50%;}
+
+  table{width:100%; border-collapse:collapse; font-size:12.5px;}
+  th{text-align:left; color:var(--text-muted); font-weight:600; font-size:10.5px; text-transform:uppercase; letter-spacing:0.5px; padding:8px 10px; border-bottom:1px solid var(--border); font-family:var(--font-mono);}
+  td{padding:9px 10px; border-bottom:1px solid var(--border);}
+  tr:last-child td{border-bottom:none;}
+  .badge{padding:2px 9px; border-radius:20px; font-size:10.5px; font-weight:600;}
+  .badge.ok{background:rgba(52,211,153,0.12); color:var(--green);}
+  .badge.warn{background:rgba(245,166,35,0.14); color:var(--amber);}
+  .badge.crit{background:rgba(248,113,113,0.14); color:var(--red);}
+
+  /* ---------- SIMULATOR ---------- */
+  .sim-wrap{display:grid; grid-template-columns:320px 1fr; gap:16px;}
+  @media(max-width:900px){.sim-wrap{grid-template-columns:1fr;}}
+  .sim-form{background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:20px;}
+  .sim-form label{font-size:11.5px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; font-family:var(--font-mono);}
+  select{
+    width:100%; margin-top:8px; margin-bottom:18px; padding:10px 12px;
+    background:var(--surface-2); border:1px solid var(--border); color:var(--text);
+    border-radius:8px; font-size:13.5px; font-family:var(--font-display);
+  }
+  .run-btn{
+    width:100%; padding:11px; border:none; border-radius:8px; cursor:pointer;
+    background:linear-gradient(135deg, var(--cyan), var(--violet)); color:#08101C;
+    font-weight:700; font-size:13.5px; letter-spacing:0.2px;
+    transition:opacity .15s;
+  }
+  .run-btn:hover{opacity:0.88;}
+  .sim-note{font-size:11px; color:var(--text-muted); margin-top:14px; line-height:1.5;}
+  .sim-results{display:grid; grid-template-columns:repeat(2,1fr); gap:14px; align-content:start;}
+
+  .empty-panel{
+    background:var(--surface); border:1px dashed var(--border); border-radius:12px;
+    padding:40px; text-align:center; color:var(--text-muted); font-size:13px;
+  }
+
+  footer.credits{margin-top:20px; font-size:11px; color:var(--text-muted); text-align:center;}
+</style>
+</head>
+<body>
+
+<!-- ============ SIDEBAR ============ -->
+<div class="sidebar">
+  <div class="brand">
+    <div class="brand-mark">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M3 12h4l2-7 4 14 2-7h6" stroke="#08101C" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <div>
+      <div class="brand-text">CityPulse</div>
+      <div class="brand-sub">Smart City OS</div>
+    </div>
+  </div>
+  <nav id="nav">
+    <div class="nav-group-label">Overview</div>
+    <div class="nav-item active" data-section="dashboard">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+      Dashboard
+    </div>
+    <div class="nav-group-label">Intelligence Modules</div>
+    <div class="nav-item" data-section="mobility">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 12l4-4M3 12l4 4M21 12l-4-4M21 12l-4 4"/></svg>
+      Mobility Intelligence
+    </div>
+    <div class="nav-item" data-section="environment">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C8 6 6 9.5 6 13a6 6 0 0012 0c0-3.5-2-7-6-11z"/></svg>
+      Environmental Intelligence
+    </div>
+    <div class="nav-item" data-section="infrastructure">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V9l7-5 7 5v12M9 21v-6h6v6"/></svg>
+      Infrastructure Health
+    </div>
+    <div class="nav-item" data-section="human">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+      Human Activity
+    </div>
+    <div class="nav-group-label">Planning</div>
+    <div class="nav-item" data-section="simulator">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v10m-12-6v10m0-10H3m6 0h10M3 15v4a2 2 0 002 2h4"/></svg>
+      What-If Simulator
+    </div>
+    <div class="nav-item" data-section="analytics">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18M7 15l4-6 4 3 5-8"/></svg>
+      Analytics
+    </div>
+    <div class="nav-item" data-section="reports">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h6M9 9h1"/></svg>
+      Reports
+    </div>
+    <div class="nav-item" data-section="settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.6V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1-1.5 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.9.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.9V9a1.7 1.7 0 001.5 1h.1a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>
+      Settings
+    </div>
+  </nav>
+  <div class="sidebar-foot">CITYPULSE v0.9 · SOFTWARE METRICS BUILD</div>
+</div>
+
+<!-- ============ MAIN ============ -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div>
+        <div class="page-title" id="pageTitle">City Overview</div>
+        <div class="page-sub" id="pageSub">Live snapshot across all city systems</div>
+      </div>
+    </div>
+    <div class="pulse-strip">
+      <div class="pulse-dot"></div>
+      <svg id="livePulse" viewBox="0 0 300 34" preserveAspectRatio="none"></svg>
+    </div>
+    <div class="topbar-right">
+      <div class="clock" id="clock">--:--:--</div>
+      <button class="refresh-btn" id="refreshBtn" title="Refresh live data">Refresh</button>
+      <div class="avatar">SP</div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <section class="section active" id="dashboard">
+      <div class="section-head"><h1>City Overview</h1><p>Aggregated intelligence across mobility, environment, infrastructure &amp; human activity — MG Road Zone, Chennai</p></div>
+      <div class="cards-grid" id="dash-cards"></div>
+      <div class="panels-grid">
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title">City Pulse Index — 24h Trend</div><div class="panel-tag">LIVE</div></div>
+          <div id="dashChartMain"></div>
+          <div class="legend">
+            <span><i class="dot" style="background:var(--cyan)"></i>Traffic Index</span>
+            <span><i class="dot" style="background:var(--green)"></i>AQI</span>
+            <span><i class="dot" style="background:var(--amber)"></i>Crowd Density</span>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title">Active Alerts</div><div class="panel-tag">6 TODAY</div></div>
+          <table id="alertsTable"></table>
+        </div>
+      </div>
+    </section>
+
+    <!-- MOBILITY -->
+    <section class="section" id="mobility">
+      <div class="section-head"><h1>🚦 Mobility Intelligence</h1><p>Live traffic index, congestion &amp; road safety across monitored corridors</p></div>
+      <div class="cards-grid" id="mob-cards"></div>
+      <div class="panels-grid">
+        <div class="panel"><div class="panel-head"><div class="panel-title">Traffic Trend (24h)</div><div class="panel-tag">INDEX</div></div><div id="mobTrend"></div></div>
+        <div class="panel"><div class="panel-head"><div class="panel-title">Peak Hours</div><div class="panel-tag">VEH/HR</div></div><div id="mobPeak"></div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><div class="panel-title">Road Congestion by Corridor</div><div class="panel-tag">5 ROADS</div></div>
+        <table id="congestionTable"></table>
+      </div>
+    </section>
+
+    <!-- ENVIRONMENT -->
+    <section class="section" id="environment">
+      <div class="section-head"><h1>🌱 Environmental Intelligence</h1><p>Air quality, temperature &amp; noise monitoring across sensor clusters</p></div>
+      <div class="cards-grid" id="env-cards"></div>
+      <div class="panels-grid">
+        <div class="panel"><div class="panel-head"><div class="panel-title">AQI Trend (24h)</div><div class="panel-tag">AQI</div></div><div id="envAqi"></div></div>
+        <div class="panel"><div class="panel-head"><div class="panel-title">Temperature Trend</div><div class="panel-tag">°C</div></div><div id="envTemp"></div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><div class="panel-title">Pollution Heatmap (simulated)</div><div class="panel-tag">BY ZONE</div></div>
+        <div id="envHeat" style="display:grid; grid-template-columns:repeat(8,1fr); gap:6px;"></div>
+      </div>
+    </section>
+
+    <!-- INFRASTRUCTURE -->
+    <section class="section" id="infrastructure">
+      <div class="section-head"><h1>🏗 Infrastructure Health</h1><p>Roads, streetlights, water supply &amp; maintenance request tracking</p></div>
+      <div class="cards-grid" id="infra-cards"></div>
+      <div class="panels-grid">
+        <div class="panel"><div class="panel-head"><div class="panel-title">Fault Reports (30d)</div><div class="panel-tag">COUNT</div></div><div id="infraFaults"></div></div>
+        <div class="panel"><div class="panel-head"><div class="panel-title">Asset Health Score</div><div class="panel-tag">%</div></div><div id="infraHealth"></div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><div class="panel-title">Repair Status Queue</div><div class="panel-tag">12 OPEN</div></div>
+        <table id="repairQueueTable"></table>
+      </div>
+    </section>
+
+    <!-- HUMAN ACTIVITY -->
+    <section class="section" id="human">
+      <div class="section-head"><h1>👥 Human Activity</h1><p>Crowd density, public transport demand &amp; event-driven surges</p></div>
+      <div class="cards-grid" id="human-cards"></div>
+      <div class="panels-grid">
+        <div class="panel"><div class="panel-head"><div class="panel-title">Passenger Flow (24h)</div><div class="panel-tag">METRO</div></div><div id="humanFlow"></div></div>
+        <div class="panel"><div class="panel-head"><div class="panel-title">Crowd Demand Forecast</div><div class="panel-tag">NEXT 6H</div></div><div id="humanForecast"></div></div>
+      </div>
+    </section>
+
+    <!-- SIMULATOR -->
+    <section class="section" id="simulator">
+      <div class="section-head"><h1>🔮 What-If Simulator</h1><p>Model the projected city-wide impact of a hypothetical scenario</p></div>
+      <div class="sim-wrap">
+        <div class="sim-form">
+          <label>Scenario</label>
+          <select id="scenarioSelect">
+            <option value="road_closure">Road Closure</option>
+            <option value="heavy_rain">Heavy Rain</option>
+            <option value="festival">Festival</option>
+            <option value="new_metro">New Metro Station</option>
+          </select>
+          <label>Affected Zone</label>
+          <select id="zoneSelect">
+            <option>MG Road</option>
+            <option>T. Nagar</option>
+            <option>Anna Nagar</option>
+            <option>Velachery</option>
+          </select>
+          <button class="run-btn" onclick="runSimulation()">Run Simulation</button>
+          <div class="sim-note">Uses rule-based dummy projection logic for demonstration. Replace with a trained model for production use.</div>
+        </div>
+        <div>
+          <div class="sim-results" id="simResults"></div>
+          <div class="panel" style="margin-top:14px;">
+            <div class="panel-head"><div class="panel-title">Projected Traffic Index — Next 6h</div><div class="panel-tag" id="simTag">ROAD CLOSURE</div></div>
+            <div id="simChart"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ANALYTICS -->
+    <section class="section" id="analytics">
+      <div class="section-head"><h1>Analytics</h1><p>Cross-module correlation &amp; historical performance</p></div>
+      <div class="panels-grid">
+        <div class="panel"><div class="panel-head"><div class="panel-title">Congestion vs AQI Correlation</div><div class="panel-tag">7-DAY</div></div><div id="anaCorr"></div></div>
+        <div class="panel"><div class="panel-head"><div class="panel-title">Module Performance Snapshot</div><div class="panel-tag">SCORES</div></div><div id="anaBars"></div></div>
+      </div>
+    </section>
+
+    <!-- REPORTS -->
+    <section class="section" id="reports">
+      <div class="section-head"><h1>Reports</h1><p>Generated reports for stakeholder review</p></div>
+      <div class="panel">
+        <table id="reportsTable"></table>
+      </div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section class="section" id="settings">
+      <div class="section-head"><h1>Settings</h1><p>Prototype configuration — not persisted</p></div>
+      <div class="empty-panel">Settings are stubbed for this prototype build. Data source, alert thresholds and user roles would live here in a production system.</div>
+    </section>
+
+    <footer class="credits">CityPulse Prototype · Software Metrics Course Deliverable · Mock data, no backend</footer>
+  </div>
+</div>
+
+<script>
+/* ================= STATE AND DATA ================= */
+function series(n, base, spread){
+  let arr=[]; let v=base;
+  for(let i=0;i<n;i++){
+    v += (Math.random()-0.5)*spread;
+    v = Math.max(2, v);
+    arr.push(Math.round(v*10)/10);
+  }
+  return arr;
+}
+function clamp(value, min, max){ return Math.max(min, Math.min(max, value)); }
+function trendArrow(value){ return value.startsWith('+') ? 'up' : value.startsWith('-') ? 'down' : 'flat'; }
+function badgeClass(status){
+  if(!status) return 'flat';
+  if(status.toLowerCase().includes('critical') || status.toLowerCase().includes('heavy') || status.toLowerCase().includes('unassigned')) return 'crit';
+  if(status.toLowerCase().includes('warning') || status.toLowerCase().includes('moderate') || status.toLowerCase().includes('elevated') || status.toLowerCase().includes('in progress') || status.toLowerCase().includes('monitoring')) return 'warn';
+  return 'ok';
+}
+const state = {
+  traffic24: series(24, 60, 14),
+  aqi24: series(24, 95, 18),
+  crowd24: series(24, 50, 20),
+  temp24: series(24, 30, 3),
+  peakHours: [12,18,25,60,88,72,40,35,55,80,65,30],
+  faults30: series(10, 8, 5).map(x=>Math.round(x)),
+  health: series(10, 78, 10),
+  flow24: series(24, 400, 150),
+  forecast6: series(6, 55, 15),
+  corr7: series(7, 70, 12),
+  alerts:[
+    {zone:'MG Road', type:'Congestion', status:'Elevated'},
+    {zone:'T. Nagar', type:'AQI Spike', status:'Critical'},
+    {zone:'Anna Nagar', type:'Streetlight Fault', status:'Pending'},
+    {zone:'Adyar', type:'Water Pressure', status:'Resolved'},
+    {zone:'Velachery', type:'Crowd Surge', status:'Monitoring'},
+  ],
+  corridors:[
+    {road:'MG Road', congestion:82, speed:31, accidents:2, status:'Heavy'},
+    {road:'Anna Salai', congestion:67, speed:38, accidents:1, status:'Moderate'},
+    {road:'OMR', congestion:74, speed:34, accidents:3, status:'Moderate'},
+    {road:'ECR', congestion:41, speed:52, accidents:0, status:'Free-flow'},
+    {road:'GST Road', congestion:58, speed:40, accidents:1, status:'Moderate'},
+  ],
+  issues:[
+    {asset:'Streetlight #A-114', zone:'Anna Nagar', since:'2 days ago', status:'In Progress'},
+    {asset:'Pothole — Anna Salai', zone:'Central', since:'5 days ago', status:'Unassigned'},
+    {asset:'Water Main Valve', zone:'Adyar', since:'1 day ago', status:'In Progress'},
+    {asset:'Traffic Signal #C-9', zone:'T. Nagar', since:'6 hours ago', status:'Unassigned'},
+    {asset:'Storm Drain Blockage', zone:'Velachery', since:'3 days ago', status:'Resolved'},
+  ],
+  reports:[
+    {report:'Weekly Mobility Summary', period:'Jul 14 – Jul 20', generated:'Jul 21, 2026', status:'Ready'},
+    {report:'Environmental Compliance', period:'Jun 2026', generated:'Jul 1, 2026', status:'Ready'},
+    {report:'Infrastructure Maintenance Log', period:'Jul 2026 (MTD)', generated:'Jul 23, 2026', status:'Draft'},
+    {report:'Human Activity & Transit Demand', period:'Jul 14 – Jul 20', generated:'Jul 21, 2026', status:'Ready'},
+  ],
+  scenarioEffects:{
+    road_closure:{traffic:'+22%', pollution:'-8%', travel:'+15 min', crowd:'+40%', base:70, spread:20},
+    heavy_rain:{traffic:'+35%', pollution:'-18%', travel:'+25 min', crowd:'-30%', base:80, spread:15},
+    festival:{traffic:'+48%', pollution:'+14%', travel:'+30 min', crowd:'+65%', base:85, spread:12},
+    new_metro:{traffic:'-12%', pollution:'-9%', travel:'-8 min', crowd:'+20%', base:45, spread:10},
+  },
+  pulseData: series(40, 17, 10),
+};
+
+/* ================= SVG CHART HELPERS ================= */
+function lineSVG(data, opts={}){
+  const w = opts.w||560, h = opts.h||150, color = opts.color||'var(--cyan)', fill = opts.fill;
+  const max = Math.max(...data), min = Math.min(...data);
+  const pad = 6;
+  const stepX = (w-pad*2)/(data.length-1);
+  const pts = data.map((d,i)=>{
+    const x=pad+i*stepX;
+    const y=pad + (h-pad*2) - ((d-min)/((max-min)||1))*(h-pad*2);
+    return [x,y];
+  });
+  const line = pts.map(p=>p.join(',')).join(' ');
+  const fillPath = fill ? `<polygon points="${pad},${h-pad} ${line} ${w-pad},${h-pad}" fill="${color}" opacity="0.12"/>` : '';
+  return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">${fillPath}<polyline points="${line}" fill="none" stroke="${color}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+}
+function multiLineSVG(seriesArr, colors, opts={}){
+  const w = opts.w||560, h = opts.h||150, pad=6;
+  const all = seriesArr.flat();
+  const max = Math.max(...all), min = Math.min(...all);
+  let svg = `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">`;
+  seriesArr.forEach((data, idx)=>{
+    const stepX = (w-pad*2)/(data.length-1);
+    const pts = data.map((d,i)=>{
+      const x=pad+i*stepX;
+      const y=pad + (h-pad*2) - ((d-min)/((max-min)||1))*(h-pad*2);
+      return [x,y];
+    }).map(p=>p.join(',')).join(' ');
+    svg += `<polyline points="${pts}" fill="none" stroke="${colors[idx]}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>`;
+  });
+  svg += '</svg>';
+  return svg;
+}
+function barSVG(data, opts={}){
+  const w = opts.w||560, h = opts.h||150, color = opts.color||'var(--cyan)', pad=6, gap=6;
+  const max = Math.max(...data) || 1;
+  const bw = (w-pad*2)/data.length - gap;
+  let svg = `<svg class="bar-chart" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">`;
+  data.forEach((d,i)=>{
+    const bh = (d/max)*(h-pad*2);
+    const x = pad + i*((w-pad*2)/data.length);
+    const y = h-pad-bh;
+    svg += `<rect x="${x}" y="${y}" width="${bw}" height="${bh}" rx="3" fill="${color}" opacity="${0.55 + 0.45*(d/max)}"/>`;
+  });
+  svg += '</svg>';
+  return svg;
+}
+
+/* ================= UI HELPERS ================= */
+function card(label, value, unit, delta, accent, dirClass){
+  return `<div class="card" style="--accent:${accent}"><div class="card-label">${label}</div><div class="card-value">${value}<span class="unit">${unit}</span></div><div class="card-delta ${dirClass}">${delta}</div></div>`;
+}
+function renderCards(containerId, cards){
+  document.getElementById(containerId).innerHTML = cards.map(c=>card(c.label, c.value, c.unit, c.delta, c.accent, c.dir)).join('');
+}
+function renderTable(tableId, columns, rows){
+  const table = document.getElementById(tableId);
+  if(!table) return;
+  const header = columns.map(col=>`<th>${col.label}</th>`).join('');
+  const body = rows.map(row => `<tr>${columns.map(col => {
+    if(col.render) return `<td>${col.render(row)}</td>`;
+    return `<td>${row[col.field] ?? ''}</td>`;
+  }).join('')}</tr>`).join('');
+  table.innerHTML = `<thead><tr>${header}</tr></thead><tbody>${body}</tbody>`;
+}
+function buildHeatMap(){
+  const heat = [];
+  for(let i=0;i<24;i++){
+    const v = Math.random();
+    const color = v < 0.33 ? 'var(--green)' : v < 0.7 ? 'var(--amber)' : 'var(--red)';
+    heat.push(`<div title="Zone ${i+1} — intensity ${(v*100).toFixed(0)}%" style="height:34px; border-radius:6px; background:${color}; opacity:${0.35+v*0.6}"></div>`);
+  }
+  document.getElementById('envHeat').innerHTML = heat.join('');
+}
+function updateLiveStatus(){
+  const time = new Date().toLocaleTimeString('en-IN', {hour12:false});
+  document.getElementById('clock').textContent = time;
+}
+
+/* ================= DATA GENERATORS ================= */
+function shiftSeries(data, volatility=10, floor=3){
+  const next = clamp(data[data.length-1] + (Math.random()-0.5)*volatility, floor, 180);
+  data.push(Math.round(next*10)/10);
+  data.shift();
+}
+function refreshLiveData(){
+  shiftSeries(state.traffic24, 7, 20);
+  shiftSeries(state.aqi24, 9, 35);
+  shiftSeries(state.crowd24, 10, 25);
+  shiftSeries(state.temp24, 1.8, 24);
+  shiftSeries(state.flow24, 90, 200);
+  state.peakHours = state.peakHours.map(value => clamp(value + Math.round((Math.random()-0.5)*16), 20, 95));
+  state.faults30 = state.faults30.map(v => clamp(v + Math.round((Math.random()-0.5)*3), 2, 16));
+  state.health = state.health.map(v => clamp(v + (Math.random()-0.5)*6, 55, 100));
+  state.forecast6 = state.forecast6.map(v => clamp(v + (Math.random()-0.5)*14, 25, 90));
+  state.corr7 = state.corr7.map(v => clamp(v + (Math.random()-0.5)*10, 40, 100));
+  state.alerts = state.alerts.map(alert => ({
+    ...alert,
+    status: alert.status === 'Resolved' ? 'Resolved' : Math.random() > 0.7 ? 'Critical' : alert.status,
+  }));
+  state.corridors = state.corridors.map(c => ({
+    ...c,
+    congestion: clamp(c.congestion + Math.round((Math.random()-0.5)*8), 30, 95),
+    speed: clamp(c.speed + Math.round((Math.random()-0.5)*6), 18, 60),
+    accidents: clamp(c.accidents + Math.round((Math.random()-0.5)*1), 0, 4),
+  }));
+}
+function formatDelta(current, previous, suffix=' vs yesterday'){
+  const diff = current - previous;
+  const sign = diff >= 0 ? '▲' : '▼';
+  return `${sign} ${Math.abs(Math.round(diff))}${suffix}`;
+}
+function createSectionCards(){
+  const trafficLatest = Math.round(state.traffic24[state.traffic24.length-1]);
+  const aqiLatest = Math.round(state.aqi24[state.aqi24.length-1]);
+  const crowdLatest = Math.round(state.crowd24[state.crowd24.length-1]);
+  const tempLatest = state.temp24[state.temp24.length-1].toFixed(1);
+  const flowLatest = Math.round(state.flow24[state.flow24.length-1]);
+  const forecastLatest = Math.round(state.forecast6[state.forecast6.length-1]);
+  return {
+    dash:[
+      {label:'Live Traffic Index', value:trafficLatest, unit:'/100', delta:formatDelta(trafficLatest, state.traffic24[state.traffic24.length-2]), accent:'var(--cyan)', dir:trendArrow(formatDelta(trafficLatest, state.traffic24[state.traffic24.length-2]))},
+      {label:'City AQI', value:aqiLatest, unit:'AQI', delta:`${formatDelta(aqiLatest, state.aqi24[state.aqi24.length-2], ' pts')}`, accent:'var(--amber)', dir:trendArrow(formatDelta(aqiLatest, state.aqi24[state.aqi24.length-2], ' pts'))},
+      {label:'Crowd Density', value:crowdLatest, unit:'/100', delta:formatDelta(crowdLatest, state.crowd24[state.crowd24.length-2]), accent:'var(--green)', dir:trendArrow(formatDelta(crowdLatest, state.crowd24[state.crowd24.length-2]))},
+      {label:'Maintenance Tickets', value:state.faults30.reduce((sum,v)=>sum+v,0), unit:'open', delta:`${Math.round((Math.random()-0.5)*6)} new today`, accent:'var(--red)', dir:'up'},
+    ],
+    mobility:[
+      {label:'Live Traffic Index', value:trafficLatest, unit:'/100', delta:`${formatDelta(trafficLatest, state.traffic24[state.traffic24.length-2])}`, accent:'var(--cyan)', dir:trendArrow(formatDelta(trafficLatest, state.traffic24[state.traffic24.length-2]))},
+      {label:'Congestion Level', value:Math.round(state.corridors.reduce((sum,c)=>sum+c.congestion,0)/state.corridors.length), unit:'%', delta:'Moderate across city', accent:'var(--amber)', dir:'flat'},
+      {label:'Average Speed', value:Math.round(state.corridors.reduce((sum,c)=>sum+c.speed,0)/state.corridors.length), unit:'km/h', delta:'Updated continuously', accent:'var(--red)', dir:'up'},
+      {label:'Accident Alerts', value:state.corridors.filter(c=>c.accidents>0).length, unit:'this week', delta:'Active incidents', accent:'var(--red)', dir:'up'},
+    ],
+    environment:[
+      {label:'AQI', value:aqiLatest, unit:'AQI', delta:`${aqiLatest>100?'Unhealthy':'Moderate'}`, accent:'var(--amber)', dir:aqiLatest>100?'up':'flat'},
+      {label:'Temperature', value:tempLatest, unit:'°C', delta:`${formatDelta(parseFloat(tempLatest), state.temp24[state.temp24.length-2].toFixed(1), '°C')}`, accent:'var(--red)', dir:trendArrow(formatDelta(parseFloat(tempLatest), state.temp24[state.temp24.length-2].toFixed(1), '°C'))},
+      {label:'Humidity', value:clamp(55 + Math.round((Math.random()-0.5)*14), 45, 78), unit:'%', delta:'Typical for season', accent:'var(--cyan)', dir:'flat'},
+      {label:'Noise Level', value:clamp(55 + Math.round((Math.random()-0.5)*16), 50, 75), unit:'dB', delta:'Within limits', accent:'var(--green)', dir:'down'},
+    ],
+    infrastructure:[
+      {label:'Roads Monitored', value:48, unit:'segments', delta:'5 flagged for repair', accent:'var(--cyan)', dir:'flat'},
+      {label:'Streetlights', value:'1,204', unit:'units', delta:'97.2% operational', accent:'var(--green)', dir:'down'},
+      {label:'Water Supply', value:'93', unit:'%', delta:'Coverage', accent:'var(--amber)', dir:'flat'},
+      {label:'Maintenance Requests', value:state.issues.filter(i=>i.status!=='Resolved').length, unit:'open', delta:'Updated live', accent:'var(--red)', dir:'up'},
+    ],
+    human:[
+      {label:'Crowd Density', value:crowdLatest, unit:'/100', delta:'Peak near T. Nagar', accent:'var(--amber)', dir:'flat'},
+      {label:'Metro Usage', value:`${flowLatest.toLocaleString()}`, unit:'riders', delta:'Updated hourly', accent:'var(--cyan)', dir:'up'},
+      {label:'Bus Demand', value:clamp(55 + Math.round((Math.random()-0.5)*26), 50, 87), unit:'%', delta:'High on OMR corridor', accent:'var(--violet)', dir:'flat'},
+      {label:'Event Alerts', value:2, unit:'active', delta:'Festival — Anna Nagar', accent:'var(--red)', dir:'up'},
+    ],
+  };
+}
+
+function renderAll(){
+  const cards = createSectionCards();
+  renderCards('dash-cards', cards.dash);
+  renderCards('mob-cards', cards.mobility);
+  renderCards('env-cards', cards.environment);
+  renderCards('infra-cards', cards.infrastructure);
+  renderCards('human-cards', cards.human);
+  document.getElementById('dashChartMain').innerHTML = multiLineSVG([state.traffic24, state.aqi24, state.crowd24], ['var(--cyan)','var(--green)','var(--amber)'], {h:170});
+  document.getElementById('mobTrend').innerHTML = lineSVG(state.traffic24, {color:'var(--cyan)', fill:true});
+  document.getElementById('mobPeak').innerHTML = barSVG(state.peakHours, {color:'var(--violet)'});
+  document.getElementById('envAqi').innerHTML = lineSVG(state.aqi24, {color:'var(--amber)', fill:true});
+  document.getElementById('envTemp').innerHTML = lineSVG(state.temp24, {color:'var(--red)', fill:true});
+  buildHeatMap();
+  document.getElementById('infraFaults').innerHTML = barSVG(state.faults30, {color:'var(--red)'});
+  document.getElementById('infraHealth').innerHTML = lineSVG(state.health, {color:'var(--green)', fill:true});
+  document.getElementById('humanFlow').innerHTML = lineSVG(state.flow24, {color:'var(--cyan)', fill:true});
+  document.getElementById('humanForecast').innerHTML = barSVG(state.forecast6, {color:'var(--amber)'});
+  document.getElementById('anaCorr').innerHTML = multiLineSVG([state.corr7, state.aqi24.slice(0,7)], ['var(--cyan)','var(--green)'], {h:150});
+  document.getElementById('anaBars').innerHTML = barSVG([82,74,91,68,77], {color:'var(--violet)'});
+  renderTable('alertsTable', [
+    {label:'Zone', field:'zone'},
+    {label:'Type', field:'type'},
+    {label:'Status', render: row => `<span class="badge ${badgeClass(row.status)}">${row.status}</span>`},
+  ], state.alerts);
+  renderTable('congestionTable', [
+    {label:'Road', field:'road'},
+    {label:'Congestion', render: row => `${row.congestion}%`},
+    {label:'Avg Speed', render: row => `${row.speed} km/h`},
+    {label:'Accidents (7d)', field:'accidents'},
+    {label:'Status', render: row => `<span class="badge ${badgeClass(row.status)}">${row.status}</span>`},
+  ], state.corridors);
+  renderTable('repairQueueTable', [
+    {label:'Asset', field:'asset'},
+    {label:'Zone', field:'zone'},
+    {label:'Reported', field:'since'},
+    {label:'Status', render: row => `<span class="badge ${badgeClass(row.status)}">${row.status}</span>`},
+  ], state.issues);
+  renderTable('reportsTable', [
+    {label:'Report', field:'report'},
+    {label:'Period', field:'period'},
+    {label:'Generated', field:'generated'},
+    {label:'Status', render: row => `<span class="badge ${badgeClass(row.status)}">${row.status}</span>`},
+  ], state.reports);
+}
+
+function setLiveUpdateText(){
+  const title = document.getElementById('pageTitle');
+  title.textContent = title.textContent.replace('Live', 'Live');
+}
+
+function refreshAllData(userTriggered=false){
+  refreshLiveData();
+  renderAll();
+  if(userTriggered){
+    const btn = document.getElementById('refreshBtn');
+    btn.textContent = 'Refreshed';
+    setTimeout(()=> btn.textContent = 'Refresh', 1000);
+  }
+}
+
+/* ================= NAVIGATION ================= */
+const titles = {
+  dashboard:['City Overview','Aggregated intelligence across all city systems'],
+  mobility:['Mobility Intelligence','Traffic, congestion & road safety'],
+  environment:['Environmental Intelligence','Air quality, temperature & noise'],
+  infrastructure:['Infrastructure Health','Roads, utilities & maintenance'],
+  human:['Human Activity','Crowd, transit & event demand'],
+  simulator:['What-If Simulator','Scenario-based impact projection'],
+  analytics:['Analytics','Cross-module correlation & trends'],
+  reports:['Reports','Generated stakeholder reports'],
+  settings:['Settings','Prototype configuration'],
+};
+document.querySelectorAll('.nav-item').forEach(item=>{
+  item.addEventListener('click', ()=>{
+    document.querySelectorAll('.nav-item').forEach(i=>i.classList.remove('active'));
+    item.classList.add('active');
+    const sec = item.dataset.section;
+    document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+    document.getElementById(sec).classList.add('active');
+    document.getElementById('pageTitle').textContent = titles[sec][0];
+    document.getElementById('pageSub').textContent = titles[sec][1];
+  });
+});
+
+document.getElementById('refreshBtn').addEventListener('click', ()=> refreshAllData(true));
+
+document.getElementById('scenarioSelect').addEventListener('change', runSimulation);
+document.getElementById('zoneSelect').addEventListener('change', runSimulation);
+
+document.querySelector('.run-btn').addEventListener('click', runSimulation);
+
+function runSimulation(){
+  const scenario = document.getElementById('scenarioSelect').value;
+  const zone = document.getElementById('zoneSelect').value;
+  const eff = state.scenarioEffects[scenario];
+  document.getElementById('simTag').textContent = scenario.replace('_',' ').toUpperCase();
+  document.getElementById('simResults').innerHTML = [
+    card('Traffic Impact', eff.traffic, ` ${zone}`, 'Projected change', eff.traffic.startsWith('+')?'var(--red)':'var(--green)', trendArrow(eff.traffic)),
+    card('Pollution Impact', eff.pollution, '', 'Projected change', eff.pollution.startsWith('+')?'var(--amber)':'var(--green)', trendArrow(eff.pollution)),
+    card('Travel Time', eff.travel, '', 'Avg across zone', 'var(--violet)', trendArrow(eff.travel)),
+    card('Crowd Change', eff.crowd, '', 'Foot & vehicle traffic', 'var(--cyan)', trendArrow(eff.crowd)),
+  ].join('');
+  document.getElementById('simChart').innerHTML = lineSVG(series(12, eff.base, eff.spread), {color:'var(--violet)', fill:true, h:160});
+}
+
+function drawPulse(){
+  const pulseSvg = document.getElementById('livePulse');
+  const data = state.pulseData;
+  const w=300,h=34,pad=2;
+  const max=Math.max(...data), min=Math.min(...data);
+  const stepX=(w-pad*2)/(data.length-1);
+  const pts = data.map((d,i)=>{
+    const x=pad+i*stepX;
+    const y=pad + (h-pad*2) - ((d-min)/((max-min)||1))*(h-pad*2);
+    return [x,y];
+  }).map(p=>p.join(',')).join(' ');
+  pulseSvg.innerHTML = `<polyline points="${pts}" fill="none" stroke="#22D3EE" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>`;
+}
+
+function animatePulse(){
+  state.pulseData.shift();
+  state.pulseData.push(Math.max(2, state.pulseData[state.pulseData.length-1] + (Math.random()-0.5)*9));
+  drawPulse();
+}
+
+function tickClock(){ updateLiveStatus(); }
+
+refreshAllData();
+runSimulation();
+setInterval(refreshAllData, 10000);
+setInterval(animatePulse, 900);
+setInterval(tickClock, 1000);
+</script>
+</body>
+</html>

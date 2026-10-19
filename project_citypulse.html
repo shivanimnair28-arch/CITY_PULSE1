@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CityPulse — Intelligent Smart City Dashboard</title>
+<style>
+  :root{
+    --bg:#0A0E1A;
+    --surface:#121826;
+    --surface-2:#1A2333;
+    --border:#232D42;
+    --cyan:#22D3EE;
+    --amber:#F5A623;
+    --green:#34D399;
+    --red:#F87171;
+    --violet:#A78BFA;
+    --text:#E4E9F2;
+    --text-muted:#6B7A99;
+    --font-display: -apple-system, "Segoe UI", "Helvetica Neue", sans-serif;
+    --font-mono: "SF Mono", "Roboto Mono", "Cascadia Mono", Consolas, monospace;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--font-display);
+    display:flex;
+    min-height:100vh;
+    overflow-x:hidden;
+  }
+  ::-webkit-scrollbar{width:8px; height:8px;}
+  ::-webkit-scrollbar-thumb{background:var(--surface-2); border-radius:4px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+
+  /* ---------- SIDEBAR ---------- */
+  .sidebar{
+    width:236px;
+    flex-shrink:0;
+    background:var(--surface);
+    border-right:1px solid var(--border);
+    display:flex;
+    flex-direction:column;
+    height:100vh;
+    position:sticky;
+    top:0;
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:22px 20px 18px 20px;
+    border-bottom:1px solid var(--border);
+  }
+  .brand-mark{
+    width:30px; height:30px;
+    border-radius:8px;
+    background:linear-gradient(135deg, var(--cyan), var(--violet));
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+  }
+  .brand-mark svg{width:16px; height:16px;}
+  .brand-text{font-weight:700; font-size:16.5px; letter-spacing:0.2px;}
+  .brand-sub{font-size:10px; color:var(--text-muted); font-family:var(--font-mono); letter-spacing:0.5px; text-transform:uppercase; margin-top:1px;}
+
+  nav{flex:1; padding:14px 12px; overflow-y:auto;}
+  .nav-group-label{
+    font-size:10px; letter-spacing:1.2px; text-transform:uppercase;
+    color:var(--text-muted); padding:14px 10px 6px 10px; font-family:var(--font-mono);
+  }
+  .nav-item{
+    display:flex; align-items:center; gap:11px;
+    padding:9px 10px; border-radius:8px;
+    color:var(--text-muted); text-decoration:none;
+    font-size:13.5px; font-weight:500;
+    cursor:pointer; transition:background .15s, color .15s;
+    margin-bottom:2px; border-left:2px solid transparent;
+  }
+  .nav-item svg{width:16px; height:16px; flex-shrink:0; opacity:0.85;}
+  .nav-item:hover{background:var(--surface-2); color:var(--text);}
+  .nav-item.active{
+    background:rgba(34,211,238,0.08);
+    color:var(--cyan);
+    border-left:2px solid var(--cyan);
+  }
+  .sidebar-foot{
+    padding:14px 20px; border-top:1px solid var(--border);
+    font-size:10.5px; color:var(--text-muted); font-family:var(--font-mono);
+  }
+
+  /* ---------- MAIN ---------- */
+  .main{flex:1; min-width:0; display:flex; flex-direction:column;}
+  .topbar{
+    height:64px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:0 28px;
+    border-bottom:1px solid var(--border);
+    background:rgba(18,24,38,0.6);
+    backdrop-filter:blur(6px);
+    position:sticky; top:0; z-index:5;
+  }
+  .topbar-left{display:flex; align-items:center; gap:16px;}
+  .page-title{font-size:16px; font-weight:700;}
+  .page-sub{font-size:11.5px; color:var(--text-muted);}
+  .pulse-strip{
+    flex:1; max-width:380px; height:34px; margin:0 26px;
+    display:flex; align-items:center;
+    background:var(--surface); border:1px solid var(--border); border-radius:8px;
+    padding:0 10px; gap:8px;
+  }
+  .pulse-dot{width:7px; height:7px; border-radius:50%; background:var(--green); flex-shrink:0; box-shadow:0 0 8px var(--green); animation:blink 1.6s infinite;}
+  @keyframes blink{0%,100%{opacity:1;} 50%{opacity:.35;}}
+  .pulse-strip svg{flex:1; height:26px;}
+  .topbar-right{display:flex; align-items:center; gap:18px;}
+  .clock{font-family:var(--font-mono); font-size:13px; color:var(--text-muted);}
+  .avatar{
+    width:32px; height:32px; border-radius:50%;
+    background:linear-gradient(135deg, var(--amber), var(--red));
+    display:flex; align-items:center; justify-content:center;
+    font-size:12px; font-weight:700; color:#0A0E1A;
+  }
+  .refresh-btn{
+    border:1px solid var(--border);
+    background:rgba(34,211,238,0.08);
+    color:var(--text);
+    padding:8px 12px;
+    border-radius:10px;
+    font-size:12px;
+    cursor:pointer;
+    transition:background .2s, transform .2s, border-color .2s;
+  }
+  .refresh-btn:hover{background:rgba(34,211,238,0.14); transform:translateY(-1px); border-color:var(--cyan);}
+
+  .content{padding:26px 28px 60px 28px; flex:1;}
+  .section{display:none; animation:fadein .25s ease;}
+  .section.active{display:block;}
+  @keyframes fadein{from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);}}
+
+  .section-head{margin-bottom:18px;}
+  .section-head h1{font-size:20px; font-weight:700;}
+  .section-head p{font-size:12.5px; color:var(--text-muted); margin-top:3px;}
+
+  /* ---------- CARDS ---------- */
+  .cards-grid{
+    display:grid; grid-template-columns:repeat(auto-fit, minmax(210px,1fr));
+    gap:14px; margin-bottom:22px;
+  }
+  .card{
+    background:var(--surface); border:1px solid var(--border); border-radius:12px;
+    padding:16px 18px;
+    position:relative; overflow:hidden;
+  }
+  .card::before{
+    content:''; position:absolute; top:0; left:0; width:3px; height:100%;
+    background:var(--accent, var(--cyan));
+  }
+  .card-label{font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.6px; font-family:var(--font-mono);}
+  .card-value{font-size:26px; font-weight:700; font-family:var(--font-mono); margin-top:8px; display:flex; align-items:baseline; gap:6px;}
+  .card-value span.unit{font-size:13px; color:var(--text-muted); font-weight:500;}
+  .card-delta{font-size:11.5px; margin-top:6px; font-weight:600;}
+  .up{color:var(--red);}
+  .down{color:var(--green);}
+  .flat{color:var(--text-muted);}
+
+  /* ---------- PANELS / CHARTS ---------- */
+  .panels-grid{display:grid; grid-template-columns:1.4fr 1fr; gap:14px; margin-bottom:14px;}
+  @media(max-width:980px){.panels-grid{grid-template-columns:1fr;}}
+  .panel{
+    background:var(--surface); border:1px solid var(--border); border-radius:12px;
+    padding:18px 20px;
+  }
+  .panel-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;}
+  .panel-title{font-size:13.5px; font-weight:700;}
+  .panel-tag{font-size:10px; font-family:var(--font-mono); color:var(--text-muted); background:var(--surface-2); padding:3px 8px; border-radius:20px;}
+  .spark{width:100%; height:150px; overflow:visible;}
+  .bar-chart{width:100%; height:150px;}
+  .legend{display:flex; gap:16px; margin-top:10px; font-size:11px; color:var(--text-muted);}
+  .legend span{display:flex; align-items:center; gap:6px;}
+  .dot{width:8px; height:8px; border-radius:50%;}
+
+  table{width:100%; border-collapse:collapse; font-size:12.5px;}
+  th{text-align:left; color:var(--text-muted); font-weight:600; font-size:10.5px; text-transform:uppercase; letter-spacing:0.5px; padding:8px 10px; border-bottom:1px solid var(--border); font-family:var(--font-mono);}
+  td{padding:9px 10px; border-bottom:1px solid var(--border);}
+  tr:last-child td{border-bottom:none;}
+  .badge{padding:2px 9px; border-radius:20px; font-size:10.5px; font-weight:600;}
+  .badge.ok{background:rgba(52,211,153,0.12); color:var(--green);}
+  .badge.warn{background:rgba(245,166,35,0.14); color:var(--amber);}
+  .badge.crit{background:rgba(248,113,113,0.14); color:var(--red);}
+
+  /* ---------- SIMULATOR ---------- */
+  .sim-wrap{display:grid; grid-template-columns:320px 1fr; gap:16px;}
+  @media(max-width:900px){.sim-wrap{grid-template-columns:1fr;}}
+  .sim-form{background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:20px;}
+  .sim-form label{font-size:11.5px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; font-family:var(--font-mono);}
+  select{
+    width:100%; margin-top:8px; margin-bottom:18px; padding:10px 12px;
+    background:var(--surface-2); border:1px solid var(--border); color:var(--text);
+    border-radius:8px; font-size:13.5px; font-family:var(--font-display);
+  }
+  .run-btn{
+    width:100%; padding:11px; border:none; border-radius:8px; cursor:pointer;
+    background:linear-gradient(135deg, var(--cyan), var(--violet)); color:#08101C;
+    font-weight:700; font-size:13.5px; letter-spacing:0.2px;
+    transition:opacity .15s;
+  }
+  .run-btn:hover{opacity:0.88;}
+  .sim-note{font-size:11px; color:var(--text-muted); margin-top:14px; line-height:1.5;}
+  .sim-results{display:grid; grid-template-columns:repeat(2,1fr); gap:14px; align-content:start;}
+
+  .empty-panel{
+    background:var(--surface); border:1px dashed var(--border); border-radius:12px;
+    padding:40px; text-align:center; color:var(--text-muted); font-size:13px;
+  }
+
+  footer.credits{margin-top:20px; font-size:11px; color:var(--text-muted); text-align:center;}
+
+  /* ---------- LIVE-DATA ADDITIONS ---------- */
+  .card-meta{display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; font-size:10px; font-family:var(--font-mono); color:var(--text-muted); line-height:1.4;}
+  .tag{padding:1px 7px; border-radius:20px; font-size:9.5px; font-weight:700; letter-spacing:.3px; text-transform:uppercase; font-family:var(--font-mono); white-space:nowrap;}
+  .t-provider{background:rgba(52,211,153,.12); color:var(--green);}
+  .t-model{background:rgba(34,211,238,.12); color:var(--cyan);}
+  .t-derived{background:rgba(167,139,250,.14); color:var(--violet);}
+  .t-proj{background:rgba(245,166,35,.16); color:var(--amber);}
+  .t-na{background:rgba(107,122,153,.18); color:var(--text-muted);}
+  .t-auth{background:rgba(244,114,182,.15); color:#F472B6;}
+  .t-stale{background:rgba(248,113,113,.16); color:var(--red);}
+  .card.na .card-value{color:var(--text-muted); font-size:20px;}
+  .live-chip{font-family:var(--font-mono); font-size:11px; color:var(--text-muted); white-space:nowrap;}
+  .pulse-dot.stale{background:var(--amber); box-shadow:0 0 8px var(--amber);}
+  .pulse-dot.err{background:var(--red); box-shadow:0 0 8px var(--red); animation:none;}
+  .pulse-dot.load{background:var(--cyan); box-shadow:0 0 8px var(--cyan);}
+  .notice{font-size:12px; color:var(--text-muted); line-height:1.55; background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:10px 12px; margin-bottom:14px;}
+  .notice b{color:var(--text);}
+  .chart-cap{display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; font-size:10.5px; font-family:var(--font-mono); color:var(--text-muted); margin-top:6px;}
+  .na-box{padding:34px 10px; text-align:center; color:var(--text-muted); font-size:12.5px; border:1px dashed var(--border); border-radius:8px;}
+  .hbar{display:grid; grid-template-columns:110px 1fr 74px; gap:10px; align-items:center; font-size:12px; margin:9px 0;}
+  .hbar .track{background:var(--surface-2); border-radius:6px; height:12px; overflow:hidden;}
+  .hbar .fill{height:100%; border-radius:6px;}
+  .hbar .val{font-family:var(--font-mono); text-align:right;}
+  .zone-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px;}
+  .zone{border:1px solid var(--border); border-radius:10px; padding:12px; background:var(--surface-2);}
+  .zone b{font-size:12.5px;} .zone .zv{font-family:var(--font-mono); font-size:20px; margin-top:6px; font-weight:700;}
+  .zone .zs{font-size:10.5px; color:var(--text-muted); margin-top:4px; font-family:var(--font-mono);}
+  .form-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:4px 16px;}
+  .form-grid label{font-size:11.5px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.5px; font-family:var(--font-mono);}
+  input[type=text],input[type=number]{width:100%; margin-top:8px; margin-bottom:14px; padding:10px 12px; background:var(--surface-2); border:1px solid var(--border); color:var(--text); border-radius:8px; font-size:13.5px; font-family:var(--font-display);}
+  .chk{display:flex; gap:8px; align-items:center; margin:8px 0; font-size:13px; color:var(--text);}
+  .btn-row{display:flex; gap:10px; flex-wrap:wrap; margin:14px 0;}
+  .btn-row .refresh-btn{padding:10px 16px;}
+  pre.report{background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:14px; font-size:12px; line-height:1.55; white-space:pre-wrap; word-break:break-word; max-height:520px; overflow:auto; font-family:var(--font-mono);}
+  .table-wrap{overflow-x:auto;}
+  @media(max-width:700px){.sidebar{display:none;} .pulse-strip{display:none;} .topbar{flex-wrap:wrap; gap:8px; padding:10px 14px;} .content{padding:18px 14px 50px;} .hbar{grid-template-columns:84px 1fr 62px;} .live-chip{display:none;}}
+</style>
+</head>
+<body>
+
+<!-- ============ SIDEBAR ============ -->
+<div class="sidebar">
+  <div class="brand">
+    <div class="brand-mark">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M3 12h4l2-7 4 14 2-7h6" stroke="#08101C" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <div>
+      <div class="brand-text">CityPulse</div>
+      <div class="brand-sub">Smart City OS</div>
+    </div>
+  </div>
+  <nav id="nav">
+    <div class="nav-group-label">Overview</div>
+    <div class="nav-item active" data-section="dashboard">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+      Dashboard
+    </div>
+    <div class="nav-group-label">Intelligence Modules</div>
+    <div class="nav-item" data-section="mobility">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 12l4-4M3 12l4 4M21 12l-4-4M21 12l-4 4"/></svg>
+      Mobility Intelligence
+    </div>
+    <div class="nav-item" data-section="environment">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C8 6 6 9.5 6 13a6 6 0 0012 0c0-3.5-2-7-6-11z"/></svg>
+      Environmental Intelligence
+    </div>
+    <div class="nav-item" data-section="infrastructure">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V9l7-5 7 5v12M9 21v-6h6v6"/></svg>
+      Infrastructure Health
+    </div>
+    <div class="nav-item" data-section="human">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+      Human Activity
+    </div>
+    <div class="nav-group-label">Planning</div>
+    <div class="nav-item" data-section="simulator">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v10m-12-6v10m0-10H3m6 0h10M3 15v4a2 2 0 002 2h4"/></svg>
+      What-If Simulator
+    </div>
+    <div class="nav-item" data-section="analytics">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18M7 15l4-6 4 3 5-8"/></svg>
+      Analytics
+    </div>
+    <div class="nav-item" data-section="reports">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h6M9 9h1"/></svg>
+      Reports
+    </div>
+    <div class="nav-item" data-section="settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.6V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1-1.5 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.9.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.9V9a1.7 1.7 0 001.5 1h.1a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>
+      Settings
+    </div>
+  </nav>
+  <div class="sidebar-foot">CITYPULSE v1.0 · LIVE-DATA BUILD</div>
+</div>
+
+<!-- ============ MAIN ============ -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div>
+        <div class="page-title" id="pageTitle">City Overview</div>
+        <div class="page-sub" id="pageSub">Live readings across city systems</div>
+      </div>
+    </div>
+    <div class="pulse-strip">
+      <div class="pulse-dot"></div>
+      <svg id="livePulse" viewBox="0 0 300 34" preserveAspectRatio="none"></svg>
+    </div>
+    <div class="topbar-right">
+      <div class="live-chip" id="liveChip">Connecting…</div>
+      <div class="clock" id="clock">--:--:--</div>
+      <button class="refresh-btn" id="refreshBtn" title="Refresh live data">Refresh</button>
+      <div class="avatar">SP</div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <section class="section active" id="dashboard">
+      <div class="section-head"><h1>City Overview</h1><p id="dashSub">Live readings — Chennai</p></div>
+      <div class="cards-grid" id="dash-cards"></div>
+      <div class="panels-grid">
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title">US AQI — Last 24h (model)</div><div class="panel-tag">OPEN-METEO / CAMS</div></div>
+          <div id="dashChartMain"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title">Active Alerts</div><div class="panel-tag" id="alertTag">—</div></div>
+          <table id="alertsTable"></table>
+          <div class="notice" style="margin:12px 0 0">Alerts are rule-based on the live readings above (thresholds shown in each row). They are not official advisories.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MOBILITY -->
+    <section class="section" id="mobility">
+      <div class="section-head"><h1>🚦 Mobility Intelligence</h1><p>TomTom live traffic flow on sampled road segments &amp; incident reports — Chennai</p></div>
+      <div class="notice" id="mobNotice"></div>
+      <div class="cards-grid" id="mob-cards"></div>
+      <div class="panel" style="margin-bottom:14px"><div class="panel-head"><div class="panel-title">Authority Notices — Avoid These Routes</div><div class="panel-tag" id="mobNoticesTag">—</div></div><div id="mobNotices"></div></div>
+      <div class="panels-grid">
+        <div class="panel"><div class="panel-head"><div class="panel-title">Congestion by Corridor (now)</div><div class="panel-tag">% DERIVED</div></div><div id="mobBars"></div></div>
+        <div class="panel"><div class="panel-head"><div class="panel-title">Congestion — Session History</div><div class="panel-tag">SINCE PAGE OPEN</div></div><div id="mobTrend"></div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><div class="panel-title">Road Corridors — Provider-Reported Flow</div><div class="panel-tag" id="corrTag">—</div></div>
+        <div class="table-wrap"><table id="congestionTable"></table></div>
+      </div>
+    </section>
+
+    <!-- ENVIRONMENT -->
+    <section class="section" id="environment">
+      <div class="section-head"><h1>🌱 Environmental Intelligence</h1><p>Open-Meteo weather &amp; CAMS model-based air quality — Chennai</p></div>
+      <div class="notice"><b>Data type:</b> Open-Meteo "current" values are <b>model-based estimates</b> for a grid cell, not readings from a ground sensor. Air quality is the CAMS model (coarse grid in India). No measured-sensor feed (OpenAQ/CPCB) is connected, so nothing here is labelled a sensor observation.</div>
+      <div class="cards-grid" id="env-cards"></div>
+      <div class="panels-grid">
+        <div class="panel"><div class="panel-head"><div class="panel-title">US AQI Trend (24h)</div><div class="panel-tag">AQI</div></div><div id="envAqi"></div></div>
+        <div class="panel"><div class="panel-head"><div class="panel-title">Temperature Trend (24h)</div><div class="panel-tag">°C</div></div><div id="envTemp"></div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><div class="panel-title">Zone Air Quality — Model Grid Values</div><div class="panel-tag">PM2.5 µg/m³</div></div>
+        <div id="envHeat"></div>
+        <div class="chart-cap"><span>Zones in the same model grid cell show near-identical values; this is not neighbourhood-level sensing.</span></div>
+      </div>
+    </section>
+
+    <!-- INFRASTRUCTURE -->
+    <section class="section" id="infrastructure">
+      <div class="section-head"><h1>🏗 Infrastructure Health</h1><p>Provider-reported road incidents (roadworks, closures, flooding) — not IoT sensor data</p></div>
+      <div class="notice" id="infraNotice"></div>
+      <div class="cards-grid" id="infra-cards"></div>
+      <div class="panel" style="margin-bottom:14px"><div class="panel-head"><div class="panel-title">Authority-Approved Planned Works &amp; Verified Incidents</div><div class="panel-tag" id="infraNoticesTag">—</div></div><div id="infraNotices"></div></div>
+      <div class="panels-grid">
+        <div class="panel"><div class="panel-head"><div class="panel-title">Reports by Category (now)</div><div class="panel-tag">COUNT</div></div><div id="infraBars"></div></div>
+        <div class="panel"><div class="panel-head"><div class="panel-title">Predictive Risk Scoring</div><div class="panel-tag">NOT SUPPORTED</div></div>
+          <div class="na-box">No live asset-sensor or utility-outage feed is connected for Chennai, so no failure-probability or asset-health score is shown. Incident reports are listed as reported.</div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><div class="panel-title">Verified Road Incident Reports</div><div class="panel-tag" id="incTag">—</div></div>
+        <div class="table-wrap"><table id="repairQueueTable"></table></div>
+      </div>
+    </section>
+
+    <!-- HUMAN ACTIVITY -->
+    <section class="section" id="human">
+      <div class="section-head"><h1>👥 Human Activity</h1><p>Public-demand indicators — only genuinely available data is shown</p></div>
+      <div class="cards-grid" id="human-cards"></div>
+      <div class="panel" style="margin-bottom:14px">
+        <div class="panel-head"><div class="panel-title">Data Availability — Transit &amp; Crowd</div><div class="panel-tag">STATUS</div></div>
+        <div class="table-wrap"><table id="humanAvail"></table></div>
+      </div>
+    </section>
+
+    <!-- SIMULATOR -->
+    <section class="section" id="simulator">
+      <div class="section-head"><h1>🔮 What-If Simulator</h1><p>Scenario projection computed from the latest live baseline — projections are estimates, not observations</p></div>
+      <div class="sim-wrap">
+        <div class="sim-form">
+          <label>Scenario</label>
+          <select id="scenarioSelect">
+            <option value="road_closure">Road Closure</option>
+            <option value="heavy_rain">Heavy Rain</option>
+            <option value="festival">Festival</option>
+            <option value="new_metro">Improved Public Transit</option>
+          </select>
+          <label>Affected Zone</label>
+          <select id="zoneSelect"></select>
+          <button class="run-btn" id="runSim">Run Simulation</button>
+          <div class="sim-note" id="simBaseNote"></div>
+        </div>
+        <div>
+          <div class="sim-results" id="simResults"></div>
+          <div class="panel" style="margin-top:14px;">
+            <div class="panel-head"><div class="panel-title">Baseline vs Projected</div><div class="panel-tag" id="simTag">ROAD CLOSURE</div></div>
+            <div id="simChart"></div>
+          </div>
+          <div class="panel" style="margin-top:14px;">
+            <div class="panel-head"><div class="panel-title">Assumptions &amp; Formulas</div><div class="panel-tag">NOT VALIDATED</div></div>
+            <div id="simAssume"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ANALYTICS -->
+    <section class="section" id="analytics">
+      <div class="section-head"><h1>Analytics</h1><p>Latest readings, source freshness and derived indicators</p></div>
+      <div class="panel" style="margin-bottom:14px"><div class="panel-head"><div class="panel-title">Latest Valid Readings</div><div class="panel-tag" id="anaTag">—</div></div><div class="table-wrap"><table id="anaReadings"></table></div></div>
+      <div class="panels-grid">
+        <div class="panel"><div class="panel-head"><div class="panel-title">Change Over 24h</div><div class="panel-tag">PROVIDER SERIES</div></div><div class="table-wrap"><table id="anaChange"></table></div></div>
+        <div class="panel"><div class="panel-head"><div class="panel-title">Source Freshness</div><div class="panel-tag">STATUS</div></div><div class="table-wrap"><table id="anaSources"></table></div></div>
+      </div>
+      <div class="panel"><div class="panel-head"><div class="panel-title">Derived Indicators — Formulas</div><div class="panel-tag">DERIVED</div></div><div class="table-wrap"><table id="anaDerived"></table></div></div>
+    </section>
+
+    <!-- REPORTS -->
+    <section class="section" id="reports">
+      <div class="section-head"><h1>Reports</h1><p>Current-state report generated from the data actually available right now</p></div>
+      <div class="panel">
+        <div class="btn-row">
+          <button class="refresh-btn" id="genReport">Generate report</button>
+          <button class="refresh-btn" id="dlMd">Download .md</button>
+          <button class="refresh-btn" id="dlJson">Download .json</button>
+        </div>
+        <pre class="report" id="reportPre">Click "Generate report" to build a report from the current readings.</pre>
+      </div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section class="section" id="settings">
+      <div class="section-head"><h1>Settings</h1><p>City, refresh intervals and enabled sources — saved in this browser</p></div>
+      <div class="panel" style="margin-bottom:14px">
+        <div class="form-grid">
+          <div><label>City name</label><input type="text" id="setCity"></div>
+          <div><label>Timezone (IANA)</label><input type="text" id="setTz"></div>
+          <div><label>Latitude</label><input type="number" step="0.0001" id="setLat"></div>
+          <div><label>Longitude</label><input type="number" step="0.0001" id="setLon"></div>
+          <div><label>Weather refresh (s)</label><input type="number" min="300" id="setRw"></div>
+          <div><label>Air-quality refresh (s)</label><input type="number" min="300" id="setRa"></div>
+          <div><label>Traffic refresh (s)</label><input type="number" min="120" id="setRt"></div>
+          <div><label>Backend URL (traffic proxy)</label><input type="text" id="setApi"></div>
+        </div>
+        <label class="chk"><input type="checkbox" id="setEw"> Weather (Open-Meteo)</label>
+        <label class="chk"><input type="checkbox" id="setEa"> Air quality (Open-Meteo / CAMS)</label>
+        <label class="chk"><input type="checkbox" id="setEt"> Traffic &amp; incidents (TomTom via backend)</label>
+        <label class="chk"><input type="checkbox" id="setEn"> Authority notices (admin server)</label>
+        <div class="btn-row"><button class="refresh-btn" id="saveSet">Save &amp; reload data</button><button class="refresh-btn" id="resetSet">Reset to config.json</button></div>
+        <div class="notice" id="keyStatus" style="margin:0">Checking backend…</div>
+        <div class="notice" style="margin:12px 0 0">Zone/corridor coordinates live in <b>config.json</b>. Changing the city here moves the weather/air-quality point; update the zone and corridor coordinates in <b>config.json</b> too, or the zone views will describe the wrong place. The TomTom API key is set only in the backend <b>.env</b> and never reaches this page.</div>
+      </div>
+    </section>
+
+    <footer class="credits" id="credits">CityPulse · Software Metrics Course Deliverable · Live data: Open-Meteo (weather, CAMS air quality), TomTom (traffic, incidents)</footer>
+  </div>
+</div>
+
+<script>
+/* =====================================================================
+   CityPulse live-data build.  No random/simulated values anywhere:
+   every number comes from a provider response, a documented derivation
+   from one, or a documented scenario formula applied to live baselines.
+   ===================================================================== */
+const DEFAULT_CFG = {
+  "city": {
+    "name": "Chennai",
+    "country": "IN",
+    "latitude": 13.0827,
+    "longitude": 80.2707,
+    "timezone": "Asia/Kolkata",
+    "bboxRadiusDeg": 0.12
+  },
+  "refreshSeconds": {
+    "weather": 600,
+    "airQuality": 900,
+    "traffic": 300,
+    "notices": 60
+  },
+  "sources": {
+    "weather": true,
+    "airQuality": true,
+    "traffic": true,
+    "notices": true
+  },
+  "zones": [
+    {
+      "name": "MG Road",
+      "lat": 13.061,
+      "lon": 80.242,
+      "corridor": "MG Road"
+    },
+    {
+      "name": "T. Nagar",
+      "lat": 13.0418,
+      "lon": 80.2341,
+      "corridor": "Anna Salai"
+    },
+    {
+      "name": "Anna Nagar",
+      "lat": 13.085,
+      "lon": 80.2101,
+      "corridor": null
+    },
+    {
+      "name": "Velachery",
+      "lat": 12.9815,
+      "lon": 80.218,
+      "corridor": "OMR"
+    },
+    {
+      "name": "Adyar",
+      "lat": 13.0012,
+      "lon": 80.2565,
+      "corridor": null
+    }
+  ],
+  "corridors": [
+    {
+      "name": "MG Road",
+      "lat": 13.061,
+      "lon": 80.242
+    },
+    {
+      "name": "Anna Salai",
+      "lat": 13.044,
+      "lon": 80.2505
+    },
+    {
+      "name": "OMR",
+      "lat": 12.901,
+      "lon": 80.2279
+    },
+    {
+      "name": "ECR",
+      "lat": 12.949,
+      "lon": 80.259
+    },
+    {
+      "name": "GST Road",
+      "lat": 13.007,
+      "lon": 80.22
+    }
+  ],
+  "noticesUrl": "http://localhost:4000"
+};
+let CFG = JSON.parse(JSON.stringify(DEFAULT_CFG));
+
+/* ---------- small utils ---------- */
+const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const num = (v,min,max)=> (typeof v==='number' && isFinite(v) && v>=min && v<=max) ? v : null;
+const fmt = (v,dp=0)=> v==null ? '—' : Number(v).toLocaleString('en-IN',{minimumFractionDigits:dp,maximumFractionDigits:dp});
+function fmtTime(ms, withDate){
+  if(!ms) return '—';
+  const o = {timeZone:CFG.city.timezone, hour:'2-digit', minute:'2-digit', hour12:false};
+  if(withDate){ o.day='2-digit'; o.month='short'; }
+  try { return new Intl.DateTimeFormat('en-IN',o).format(ms); } catch { return new Date(ms).toISOString(); }
+}
+function fmtAge(ms){
+  if(!ms) return '—'; const s=Math.max(0,Math.round((Date.now()-ms)/1000));
+  return s<60 ? s+'s ago' : s<3600 ? Math.round(s/60)+' min ago' : (s/3600).toFixed(1)+' h ago';
+}
+async function getJson(url, ms=12000){
+  const ac=new AbortController(), t=setTimeout(()=>ac.abort(),ms);
+  try{
+    const r=await fetch(url,{signal:ac.signal});
+    let body=null; try{ body=await r.json(); }catch{}
+    if(!r.ok){ const e=new Error((body&&(body.error||body.reason))||('HTTP '+r.status)); e.status=r.status; throw e; }
+    if(body==null) throw new Error('Response was not valid JSON');
+    return body;
+  } catch(e){ if(e.name==='AbortError') throw new Error('Request timed out'); throw e; }
+  finally{ clearTimeout(t); }
+}
+const apiBase = ()=> (CFG.apiBase!=null ? CFG.apiBase : (location.protocol==='file:' ? 'http://localhost:3000' : ''));
+
+/* ---------- metric classification ---------- */
+const TYPES = {
+  sensor:['Sensor obs','t-provider'], provider:['Provider-reported','t-provider'], model:['Model estimate','t-model'],
+  derived:['Derived','t-derived'], authority:['Authority-verified','t-auth'], proj:['Scenario projection','t-proj'], na:['Unavailable','t-na'] };
+
+/* ---------- shared live-data store ---------- */
+const SOURCES = {
+  weather:   {label:'Open-Meteo Forecast API',  short:'Open-Meteo'},
+  airQuality:{label:'Open-Meteo Air Quality API (CAMS)', short:'Open-Meteo/CAMS'},
+  traffic:   {label:'TomTom Traffic API (via CityPulse backend)', short:'TomTom'},
+  notices:   {label:'CityPulse Authority notices (admin server)', short:'Authority'},
+};
+const store = { r:{}, series:{}, zones:[], corridors:[], incidents:null, notices:null, backendUp:false, session:{cong:[]}, src:{}, meta:{} };
+Object.keys(SOURCES).forEach(id=> store.src[id]={state:'idle', loading:false, inflight:false, lastOk:null, lastTry:null, err:null, fails:0, timer:null});
+
+function putReading(srcId, metric, label, value, unit, observedAt, dataType, opts={}){
+  store.r[metric] = {metric, label, value, unit, location:opts.location||CFG.city.name, source:SOURCES[srcId].short,
+    observedAt, fetchedAt:Date.now(), dataType, srcId, text:opts.text||null, approxTime:!!opts.approxTime, note:opts.note||null};
+}
+function readingStatus(rd){
+  if(!rd) return 'unavailable';
+  const s=store.src[rd.srcId], iv=(CFG.refreshSeconds[rd.srcId]||600)*1000;
+  return (s.state==='ok' && s.lastOk && Date.now()-s.lastOk < 3*iv) ? 'live' : 'stale';
+}
+function srcReason(srcId){
+  const s=store.src[srcId];
+  if(!CFG.sources[srcId]) return 'Source disabled in Settings';
+  if(s.loading && !s.lastOk) return 'Loading first response…';
+  if(s.err) return s.err;
+  return 'No valid reading received yet';
+}
+
+/* ---------- providers ---------- */
+const WMO = {0:'Clear sky',1:'Mainly clear',2:'Partly cloudy',3:'Overcast',45:'Fog',48:'Rime fog',51:'Light drizzle',53:'Drizzle',55:'Dense drizzle',56:'Freezing drizzle',57:'Freezing drizzle',61:'Slight rain',63:'Moderate rain',65:'Heavy rain',66:'Freezing rain',67:'Freezing rain',71:'Slight snow',73:'Snow',75:'Heavy snow',77:'Snow grains',80:'Slight showers',81:'Moderate showers',82:'Violent showers',85:'Snow showers',86:'Snow showers',95:'Thunderstorm',96:'Thunderstorm, hail',99:'Thunderstorm, heavy hail'};
+const locQS = ()=>`timezone=${encodeURIComponent(CFG.city.timezone)}&timeformat=unixtime`;
+
+function hourlyUpTo(h, key, untilSec){
+  if(!h || !Array.isArray(h.time) || !Array.isArray(h[key])) return [];
+  const pts=[]; h.time.forEach((t,i)=>{ const v=h[key][i]; if(typeof t==='number' && t<=untilSec && typeof v==='number' && isFinite(v)) pts.push({t:t*1000, v}); });
+  return pts.slice(-25);
+}
+async function fetchWeather(){
+  const c=CFG.city;
+  const url=`https://api.open-meteo.com/v1/forecast?latitude=${c.latitude}&longitude=${c.longitude}&${locQS()}`+
+    `&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m&hourly=temperature_2m&past_days=1&forecast_days=1`;
+  const j=await getJson(url);
+  const cur=j.current, u=j.current_units||{};
+  if(!cur || typeof cur.time!=='number') throw new Error('Malformed response: "current" block missing');
+  const t=cur.time*1000, loc=`${c.name} (${(+j.latitude).toFixed(2)}°, ${(+j.longitude).toFixed(2)}°) model grid`;
+  const vals={temp:num(cur.temperature_2m,-60,65), hum:num(cur.relative_humidity_2m,0,100), feels:num(cur.apparent_temperature,-80,80),
+    precip:num(cur.precipitation,0,500), wind:num(cur.wind_speed_10m,0,400), wcode:num(cur.weather_code,0,99)};
+  if(Object.values(vals).every(v=>v==null)) throw new Error('Response contained no valid weather values');
+  const add=(m,l,v,un)=>{ if(v!=null) putReading('weather',m,l,v,un,t,'model',{location:loc}); else delete store.r[m]; };
+  add('temp','Temperature',vals.temp,u.temperature_2m||'°C'); add('hum','Humidity',vals.hum,u.relative_humidity_2m||'%');
+  add('feels','Feels-like temperature',vals.feels,u.apparent_temperature||'°C'); add('precip','Precipitation (preceding hour)',vals.precip,u.precipitation||'mm');
+  add('wind','Wind speed (10 m)',vals.wind,u.wind_speed_10m||'km/h');
+  if(vals.wcode!=null) putReading('weather','wcode','Conditions',vals.wcode,'',t,'model',{location:loc,text:WMO[vals.wcode]||('WMO code '+vals.wcode)}); else delete store.r.wcode;
+  const pts=hourlyUpTo(j.hourly,'temperature_2m',cur.time);
+  store.series.temp = pts.length>1 ? {points:pts, unit:u.temperature_2m||'°C', source:'Open-Meteo', dataType:'model', srcId:'weather'} : null;
+}
+async function fetchAir(){
+  const c=CFG.city, locs=[{lat:c.latitude,lon:c.longitude,name:c.name}].concat(CFG.zones.map(z=>({lat:z.lat,lon:z.lon,name:z.name})));
+  const url=`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${locs.map(l=>l.lat).join(',')}&longitude=${locs.map(l=>l.lon).join(',')}&${locQS()}`+
+    `&current=us_aqi,pm2_5,pm10,ozone,nitrogen_dioxide&hourly=us_aqi,pm2_5&past_days=1&forecast_days=1`;
+  const raw=await getJson(url), arr=Array.isArray(raw)?raw:[raw];
+  if(arr.length!==locs.length) throw new Error(`Expected ${locs.length} locations, got ${arr.length}`);
+  const city=arr[0], cur=city.current, u=city.current_units||{};
+  if(!cur || typeof cur.time!=='number') throw new Error('Malformed response: "current" block missing');
+  const t=cur.time*1000, loc=`${c.name} (${(+city.latitude).toFixed(2)}°, ${(+city.longitude).toFixed(2)}°) CAMS grid`;
+  const v={aqi:num(cur.us_aqi,0,500), pm25:num(cur.pm2_5,0,1500), pm10:num(cur.pm10,0,3000), o3:num(cur.ozone,0,2000), no2:num(cur.nitrogen_dioxide,0,2000)};
+  if(Object.values(v).every(x=>x==null)) throw new Error('Response contained no valid air-quality values');
+  const add=(m,l,x,un)=>{ if(x!=null) putReading('airQuality',m,l,x,un,t,'model',{location:loc}); else delete store.r[m]; };
+  add('aqi','US AQI (as reported by provider)',v.aqi,'AQI'); add('pm25','PM2.5',v.pm25,u.pm2_5||'µg/m³'); add('pm10','PM10',v.pm10,u.pm10||'µg/m³');
+  add('o3','Ozone',v.o3,u.ozone||'µg/m³'); add('no2','Nitrogen dioxide',v.no2,u.nitrogen_dioxide||'µg/m³');
+  const mk=(key,unit)=>{ const p=hourlyUpTo(city.hourly,key,cur.time); return p.length>1?{points:p,unit,source:'Open-Meteo/CAMS',dataType:'model',srcId:'airQuality'}:null; };
+  store.series.aqi=mk('us_aqi','AQI'); store.series.pm25=mk('pm2_5',u.pm2_5||'µg/m³');
+  store.zones = CFG.zones.map((z,i)=>{ const d=arr[i+1], cc=d&&d.current;
+    return {name:z.name, pm25:cc?num(cc.pm2_5,0,1500):null, aqi:cc?num(cc.us_aqi,0,500):null, observedAt:cc&&typeof cc.time==='number'?cc.time*1000:null,
+      grid:d?`${(+d.latitude).toFixed(2)}°, ${(+d.longitude).toFixed(2)}°`:'—'}; });
+}
+const INC_CAT = c=>({Accident:'Accident',Fog:'Fog',Dangerous:'Dangerous conditions',Rain:'Rain',Ice:'Ice',JamLane:'Jam',LaneClosure:'Lane closure',RoadClosure:'Road closure',RoadWorks:'Roadworks',Wind:'Wind',Flooding:'Flooding',Detour:'Detour',Cluster:'Cluster'}[c]||String(c||'Unknown'));
+async function fetchTraffic(){
+  let d;
+  try{ d=await getJson(apiBase()+'/api/traffic',20000); }
+  catch(e){
+    if(e.status===503){ const x=new Error(e.message); x.unavailable=true; throw x; }
+    if(e instanceof TypeError || /Failed to fetch|NetworkError/i.test(e.message)){ const x=new Error('CityPulse backend not reachable at '+(apiBase()||'this origin')+' — start it with: node server.js'); x.unavailable=true; throw x; }
+    throw e;
+  }
+  if(!d || !Array.isArray(d.corridors) || !d.incidents) throw new Error('Malformed traffic response');
+  const t=d.fetchedAt, loc=`${CFG.city.name} sampled road segments`;
+  const cs=d.corridors.map(c=>{
+    if(!c.ok) return {name:c.name, ok:false, error:c.error};
+    const cur=num(c.currentSpeed,0,300), free=num(c.freeFlowSpeed,1,300);
+    const cong = (cur!=null && free!=null) ? clamp((1-cur/free)*100,0,100) : null;
+    return {...c, currentSpeed:cur, freeFlowSpeed:free, congestion:cong};
+  });
+  const good=cs.filter(c=>c.ok && c.congestion!=null);
+  if(!good.length && !d.incidents.ok) throw new Error('No usable TomTom data in response');
+  store.corridors=cs;
+  if(good.length){
+    const avgC=good.reduce((s,c)=>s+c.congestion,0)/good.length, avgS=good.reduce((s,c)=>s+c.currentSpeed,0)/good.length;
+    const avgF=good.reduce((s,c)=>s+c.freeFlowSpeed,0)/good.length;
+    putReading('traffic','cong','Congestion (avg of sampled segments)',avgC,'%',t,'derived',{location:loc,approxTime:true,note:`n=${good.length}`});
+    putReading('traffic','speed','Average speed (sampled segments)',avgS,'km/h',t,'derived',{location:loc,approxTime:true,note:`n=${good.length}`});
+    putReading('traffic','freeflow','Average free-flow speed',avgF,'km/h',t,'derived',{location:loc,approxTime:true,note:`n=${good.length}`});
+    store.session.cong.push({t, v:avgC}); if(store.session.cong.length>240) store.session.cong.shift();
+  } else { ['cong','speed','freeflow'].forEach(m=>delete store.r[m]); }
+  if(d.incidents.ok){
+    const it=d.incidents.items||[]; store.incidents={items:it, fetchedAt:t, bbox:d.bbox};
+    const cnt=(...cats)=>it.filter(i=>cats.includes(i.category)).length;
+    const loc2=`${CFG.city.name} bbox ${d.bbox}`;
+    putReading('traffic','inc_total','Reported road incidents',it.length,'',t,'provider',{location:loc2,approxTime:true});
+    putReading('traffic','inc_works','Roadworks reports',cnt('RoadWorks'),'',t,'provider',{location:loc2,approxTime:true});
+    putReading('traffic','inc_closure','Road/lane closures',cnt('RoadClosure','LaneClosure'),'',t,'provider',{location:loc2,approxTime:true});
+    putReading('traffic','inc_flood','Flooding reports',cnt('Flooding'),'',t,'provider',{location:loc2,approxTime:true});
+    putReading('traffic','inc_acc','Accident reports',cnt('Accident'),'',t,'provider',{location:loc2,approxTime:true});
+  } else { store.incidents=null; ['inc_total','inc_works','inc_closure','inc_flood','inc_acc'].forEach(m=>delete store.r[m]); store.meta.incErr=d.incidents.error; }
+  store.meta.trafficAttribution=d.attribution;
+}
+
+/* ---------- authority notices (approved by the authority server; NOT sensor/provider data) ---------- */
+async function fetchNotices(){
+  let d;
+  try{ d=await getJson((CFG.noticesUrl||'http://localhost:4000')+'/api/public/notices',8000); }
+  catch(e){ if(e instanceof TypeError||/Failed to fetch|NetworkError/i.test(e.message)){ const x=new Error('Authority server not reachable at '+(CFG.noticesUrl||'localhost:4000')+' — start it with: node admin/server.js'); x.unavailable=true; throw x; } throw e; }
+  if(!d||!Array.isArray(d.notices)) throw new Error('Malformed notices response');
+  const clean=d.notices.filter(n=>n&&typeof n.id==='string'&&typeof n.title==='string').map(n=>({...n,lat:typeof n.lat==='number'?n.lat:null,lon:typeof n.lon==='number'?n.lon:null}));
+  store.notices={items:clean,fetchedAt:d.fetchedAt||Date.now()};
+  const loc=CFG.city.name+' (authority server)', t=store.notices.fetchedAt, n=(f)=>clean.filter(f).length;
+  putReading('notices','auth_works','Active approved planned works',n(x=>x.type==='planned_work'),'',t,'authority',{location:loc});
+  putReading('notices','auth_inc','Active authority-verified incidents',n(x=>x.type==='incident'),'',t,'authority',{location:loc});
+}
+const rad=x=>x*Math.PI/180;
+function km(a,b,c,d){ const R=6371,dl=rad(c-a),dn=rad(d-b),x=Math.sin(dl/2)**2+Math.cos(rad(a))*Math.cos(rad(c))*Math.sin(dn/2)**2; return 2*R*Math.asin(Math.sqrt(x)); }
+function nearCorridor(c, item){
+  const nm=(item.road||'').toLowerCase().includes(c.name.toLowerCase());
+  const p=c.matched||c.requested; const geo=p&&item.lat!=null&&item.lon!=null&&km(p.lat,p.lon,item.lat,item.lon)<=1.5;
+  return nm||geo;
+}
+/* Evidence ladder: a slow-down alone is only "heavy traffic". "Accident" needs a provider report or an authority-approved report. */
+function classifyCorridor(c){
+  if(!c.ok||c.congestion==null) return {label:'No data',src:null};
+  const inc=(store.incidents&&store.incidents.items||[]).filter(i=>{ const p=c.matched||c.requested; return p&&i.lat!=null&&km(p.lat,p.lon,i.lat,i.lon)<=1.0; });
+  const auth=(store.notices&&store.notices.items||[]).filter(n=>nearCorridor(c,n));
+  if(auth.some(n=>n.type==='incident'&&n.category==='accident')) return {label:'Accident — authority-verified',src:'authority'};
+  if(auth.some(n=>n.type==='planned_work')) return {label:'Planned work — avoid (authority)',src:'authority'};
+  if(inc.some(i=>i.category==='Accident')) return {label:'Accident reported nearby (TomTom)',src:'provider'};
+  if(inc.some(i=>i.category==='RoadClosure'||i.category==='LaneClosure')) return {label:'Closure reported nearby (TomTom)',src:'provider'};
+  if(c.congestion>=40) return {label:'Heavy traffic — no incident reported',src:'derived'};
+  return {label:congLabel(c.congestion),src:'derived'};
+}
+const FETCHERS = {weather:fetchWeather, airQuality:fetchAir, traffic:fetchTraffic, notices:fetchNotices};
+
+/* ---------- polling (one timer per source, no overlap, backoff) ---------- */
+function schedule(id, ms){ const s=store.src[id]; clearTimeout(s.timer); s.timer=setTimeout(()=>run(id), ms); s.next=Date.now()+ms; }
+async function run(id){
+  const s=store.src[id]; clearTimeout(s.timer);
+  const iv=(CFG.refreshSeconds[id]||600)*1000;
+  if(!CFG.sources[id]){ s.state='disabled'; s.loading=false; onUpdate(id); return; }
+  if(s.inflight) return;
+  s.inflight=true; s.loading=true; s.lastTry=Date.now(); renderChip(); const t0=performance.now();
+  try{
+    await FETCHERS[id]();
+    s.state='ok'; s.lastOk=Date.now(); s.err=null; s.fails=0; schedule(id, iv); logFetch(id,true,performance.now()-t0,null);
+  }catch(e){
+    s.err=e.message||String(e); logFetch(id,false,performance.now()-t0,s.err);
+    if(e.unavailable){ s.state=s.lastOk?'stale':'unavailable'; schedule(id, iv); }
+    else{ s.fails++; s.state=s.lastOk?'stale':'error';
+      let delay=Math.min(iv, 15000*Math.pow(2,s.fails-1)); if(e.status===429) delay=Math.max(delay,60000); schedule(id, delay); }
+  }finally{ s.inflight=false; s.loading=false; onUpdate(id); }
+}
+/* best-effort outcome log to the backend (feeds uptime metrics); silent if backend is down */
+function logFetch(id,ok,ms,error){ if(!store.backendUp) return; try{ fetch(apiBase()+'/api/log',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({source:id,ok,ms,error})}).catch(()=>{}); }catch{} }
+function startAll(){ Object.keys(SOURCES).forEach(id=>{ store.src[id].inflight=false; run(id); }); }
+function refreshAll(){ Object.keys(SOURCES).forEach(id=>run(id)); }
+function resetStore(){ store.r={}; store.series={}; store.zones=[]; store.corridors=[]; store.incidents=null; store.notices=null; store.notices=null; store.session={cong:[]}; store.meta={};
+  Object.keys(SOURCES).forEach(id=>{ const s=store.src[id]; clearTimeout(s.timer); Object.assign(s,{state:'idle',loading:false,inflight:false,lastOk:null,lastTry:null,err:null,fails:0}); }); }
+
+/* ---------- SVG / UI helpers ---------- */
+function badgeClass(status){
+  const s=String(status||'').toLowerCase();
+  if(/critical|heavy|error|unhealthy|unavailable|stale/.test(s)) return 'crit';
+  if(/warning|moderate|elevated|disabled|loading|sensitive/.test(s)) return 'warn';
+  return 'ok';
+}
+function lineSVG(data, opts={}){
+  const w=opts.w||560,h=opts.h||150,color=opts.color||'var(--cyan)',pad=6;
+  const max=Math.max(...data),min=Math.min(...data),stepX=(w-pad*2)/(data.length-1);
+  const line=data.map((d,i)=>[pad+i*stepX, pad+(h-pad*2)-((d-min)/((max-min)||1))*(h-pad*2)].join(',')).join(' ');
+  const fill=opts.fill?`<polygon points="${pad},${h-pad} ${line} ${w-pad},${h-pad}" fill="${color}" opacity="0.12"/>`:'';
+  return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">${fill}<polyline points="${line}" fill="none" stroke="${color}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+}
+function naBox(msg){ return `<div class="na-box">Unavailable — ${esc(msg)}</div>`; }
+function tsChart(s, srcId, color, dp=0){
+  if(!s || !s.points || s.points.length<2) return naBox(srcReason(srcId));
+  const v=s.points.map(p=>p.v), stale=readingStatus({srcId})!=='live';
+  return lineSVG(v,{color,fill:true})+`<div class="chart-cap"><span>${fmt(Math.min(...v),dp)}–${fmt(Math.max(...v),dp)} ${esc(s.unit)} · now ${fmt(v[v.length-1],dp)}</span><span>${fmtTime(s.points[0].t,true)} → ${fmtTime(s.points[s.points.length-1].t,true)}</span><span>${esc(s.source)} · ${TYPES[s.dataType][0]}${stale?' <span class="tag t-stale">stale</span>':''}</span></div>`;
+}
+function hbars(items){
+  if(!items.length) return naBox('no data');
+  return items.map(i=>`<div class="hbar"><div>${esc(i.label)}</div><div class="track"><div class="fill" style="width:${clamp(i.value/(i.max||1)*100,0,100)}%;background:${i.color||'var(--cyan)'}"></div></div><div class="val">${esc(i.text)}</div></div>`).join('');
+}
+function metaHTML(typeKey, rd){
+  const [lab,cls]=TYPES[typeKey]; const st=rd?readingStatus(rd):null;
+  let h=`<span class="tag ${cls}">${lab}</span>`;
+  if(rd){ h+=`<span>${esc(rd.source)} · ${rd.approxTime?'fetched ≈':'obs '}${fmtTime(rd.observedAt)}</span>`; if(st==='stale') h+=`<span class="tag t-stale">stale</span>`; }
+  return `<div class="card-meta">${h}</div>`;
+}
+function rcard(metric, label, o={}){
+  const rd=store.r[metric];
+  if(!rd){ const srcId=o.srcId; return `<div class="card na" style="--accent:var(--text-muted)"><div class="card-label">${esc(label)}</div><div class="card-value">—</div><div class="card-delta flat">${esc(o.reason||srcReason(srcId))}</div>${metaHTML('na')}</div>`; }
+  const val=rd.text!=null?rd.text:fmt(rd.value,o.dp||0);
+  const sub=o.sub?o.sub(rd):'';
+  return `<div class="card" style="--accent:${o.accent||'var(--cyan)'}"><div class="card-label">${esc(label)}</div><div class="card-value">${esc(val)}<span class="unit">${esc(rd.unit)}</span></div>${sub?`<div class="card-delta ${o.dir||'flat'}">${esc(sub)}</div>`:''}${metaHTML(rd.dataType,rd)}</div>`;
+}
+function ncard(label, reason){ return `<div class="card na" style="--accent:var(--text-muted)"><div class="card-label">${esc(label)}</div><div class="card-value">—</div><div class="card-delta flat">${esc(reason)}</div>${metaHTML('na')}</div>`; }
+function renderTable(id, cols, rows, empty){
+  const t=document.getElementById(id); if(!t) return;
+  if(!rows.length){ t.innerHTML=`<tbody><tr><td style="color:var(--text-muted)">${esc(empty||'No data')}</td></tr></tbody>`; return; }
+  t.innerHTML=`<thead><tr>${cols.map(c=>`<th>${c.label}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${cols.map(c=>`<td>${c.render?c.render(r):esc(r[c.field]??'')}</td>`).join('')}</tr>`).join('')}</tbody>`;
+}
+const badge = s=>`<span class="badge ${badgeClass(s)}">${esc(s)}</span>`;
+const aqiBand = v => v==null?null : v<=50?'Good': v<=100?'Moderate': v<=150?'Unhealthy for sensitive groups': v<=200?'Unhealthy': v<=300?'Very unhealthy':'Hazardous';
+const congLabel = c => c==null?'—' : c<20?'Free-flow': c<40?'Moderate':'Heavy';
+const $ = id=>document.getElementById(id);
+
+/* ---------- renderers (per section) ---------- */
+function renderEnv(){
+  const aq=r=>aqiBand(r.value);
+  $('env-cards').innerHTML=[
+    rcard('aqi','US AQI',{srcId:'airQuality',accent:'var(--amber)',sub:r=>aq(r),dir:'flat'}),
+    rcard('pm25','PM2.5',{srcId:'airQuality',dp:1,accent:'var(--amber)'}),
+    rcard('pm10','PM10',{srcId:'airQuality',dp:1,accent:'var(--amber)'}),
+    rcard('temp','Temperature',{srcId:'weather',dp:1,accent:'var(--red)'}),
+    rcard('hum','Humidity',{srcId:'weather',accent:'var(--cyan)'}),
+    rcard('wind','Wind speed',{srcId:'weather',dp:1,accent:'var(--green)'}),
+    rcard('precip','Precipitation',{srcId:'weather',dp:1,accent:'var(--cyan)'}),
+    rcard('wcode','Conditions',{srcId:'weather',accent:'var(--violet)'}),
+    ncard('Noise Level','No live noise-sensor feed is connected'),
+  ].join('');
+  $('envAqi').innerHTML=tsChart(store.series.aqi,'airQuality','var(--amber)');
+  $('envTemp').innerHTML=tsChart(store.series.temp,'weather','var(--red)',1);
+  if(!store.zones.length) $('envHeat').innerHTML=naBox(srcReason('airQuality'));
+  else $('envHeat').innerHTML=`<div class="zone-grid">${store.zones.map(z=>`<div class="zone"><b>${esc(z.name)}</b><div class="zv">${z.pm25==null?'—':fmt(z.pm25,1)}<span style="font-size:11px;color:var(--text-muted)"> µg/m³</span></div><div class="zs">US AQI ${fmt(z.aqi)} · ${esc(aqiBand(z.aqi)||'n/a')}</div><div class="zs">grid ${esc(z.grid)} · obs ${fmtTime(z.observedAt)}</div></div>`).join('')}</div>`;
+}
+function renderMob(){
+  const s=store.src.traffic, rd=store.r.cong;
+  $('mobNotice').innerHTML = s.state==='unavailable' || (s.state==='error'&&!rd)
+    ? `<b>Traffic data unavailable.</b> ${esc(s.err||'')} <br>Requires a free TomTom key in the backend <b>.env</b> (see README). Nothing is simulated in its place.`
+    : `<b>Provider:</b> TomTom Traffic Flow (Segment Data) on ${store.corridors.length||CFG.corridors.length} sampled road segments, ${store.meta.trafficAttribution?esc(store.meta.trafficAttribution)+'. ':''}`+
+      `Flow responses carry <b>no observation timestamp</b>, so times shown are fetch time (≈). <b>Congestion % is derived</b> as (1 − current speed ÷ free-flow speed) × 100 per segment; labels: &lt;20% free-flow, 20–40% moderate, ≥40% heavy. <b>A slow-down alone is only "heavy traffic"</b>; "accident" appears only when TomTom or the authority reports one.`+(s.state==='stale'?` <span class="tag t-stale">stale</span> ${esc(s.err||'')}`:'');
+  const cl=store.r.inc_closure;
+  $('mob-cards').innerHTML=[
+    rcard('speed','Average Speed',{srcId:'traffic',dp:0,accent:'var(--red)'}),
+    rcard('cong','Congestion Level',{srcId:'traffic',dp:0,accent:'var(--amber)',sub:r=>congLabel(r.value)}),
+    rcard('inc_total','Reported Incidents',{srcId:'traffic',accent:'var(--red)',reason:store.meta.incErr||srcReason('traffic')}),
+    rcard('inc_acc','Accident Reports',{srcId:'traffic',accent:'var(--red)',reason:store.meta.incErr||srcReason('traffic')}),
+  ].join('');
+  const good=store.corridors.filter(c=>c.ok&&c.congestion!=null);
+  $('mobBars').innerHTML=good.length?hbars(good.map(c=>({label:c.name,value:c.congestion,max:100,text:fmt(c.congestion)+'%',color:c.congestion>=40?'var(--red)':c.congestion>=20?'var(--amber)':'var(--green)'}))):naBox(srcReason('traffic'));
+  const ss=store.session.cong, sv=ss.map(p=>p.v);
+  $('mobTrend').innerHTML= ss.length>1 ? lineSVG(sv,{color:'var(--cyan)',fill:true})+`<div class="chart-cap"><span>${fmt(Math.min(...sv))}–${fmt(Math.max(...sv))}% · ${ss.length} fetches</span><span>${fmtTime(ss[0].t)} → ${fmtTime(ss[ss.length-1].t)}</span><span>TomTom · Derived (fetch times)</span></div>`
+    : `<div class="na-box">${ss.length?'One fetch so far — trend appears after the next refresh. TomTom flow gives no history, so none is invented.':esc('Unavailable — '+srcReason('traffic'))}</div>`;
+  $('corrTag').textContent=store.corridors.length?`${good.length}/${store.corridors.length} OK`:'—';
+  renderTable('congestionTable',[
+    {label:'Road',render:r=>esc(r.name)},
+    {label:'Speed (km/h)',render:r=>r.ok?fmt(r.currentSpeed):'—'},
+    {label:'Free-flow',render:r=>r.ok?fmt(r.freeFlowSpeed):'—'},
+    {label:'Congestion (derived)',render:r=>r.ok&&r.congestion!=null?fmt(r.congestion)+'%':'—'},
+    {label:'Travel time',render:r=>r.ok&&r.currentTravelTime!=null?`${fmt(r.currentTravelTime)} s <span style="color:var(--text-muted)">(free ${fmt(r.freeFlowTravelTime)} s)</span>`:'—'},
+    {label:'Confidence',render:r=>r.ok&&r.confidence!=null?fmt(r.confidence,2):'—'},
+    {label:'Matched at',render:r=>r.ok&&r.matched?`${r.matched.lat.toFixed(4)}, ${r.matched.lon.toFixed(4)}`:'—'},
+    {label:'Status (evidence)',render:r=>{ if(!r.ok) return badge('Error: '+(r.error||'no data')); const k=classifyCorridor(r); return badge(k.label+(r.roadClosure?' · closed':''))+(k.src?` <span class="tag ${TYPES[k.src][1]}">${TYPES[k.src][0]}</span>`:''); }},
+  ],store.corridors,'No traffic data received yet');
+}
+
+function noticeRows(items){
+  return items.length?`<div class="table-wrap"><table><thead><tr><th>Type</th><th>Where</th><th>What / why</th><th>When</th><th>Alternative</th></tr></thead><tbody>${items.map(n=>`<tr><td><span class="tag t-auth">${esc(n.type==='planned_work'?'Planned work':n.type==='incident'?'Verified incident':'Advisory')}</span></td><td>${esc([n.road,n.area].filter(Boolean).join(' · '))}</td><td><b>${esc(n.title)}</b><div style="color:var(--text-muted);font-size:11.5px">${esc(n.description)}</div></td><td>${n.activeFrom?esc(fmtTime(Date.parse(n.activeFrom),true)):'now'} → ${n.activeUntil?esc(fmtTime(Date.parse(n.activeUntil),true)):'until cleared'}</td><td>${esc(n.alternative||'—')}</td></tr>`).join('')}</tbody></table></div>`:'<div class="na-box">No active authority notices.</div>';
+}
+function renderNotices(){
+  const s=store.src.notices, n=store.notices, stale=n&&readingStatus({srcId:'notices'})!=='live';
+  const foot=`<div class="chart-cap"><span>Approved by the authority server (simulated authority role) — not a sensor or provider reading</span><span>fetched ${n?fmtTime(n.fetchedAt):'—'}${stale?' <span class="tag t-stale">stale</span>':''}</span></div>`;
+  const body=n?noticeRows(n.items)+foot:naBox(srcReason('notices'));
+  $('mobNotices').innerHTML=n?noticeRows(n.items.filter(x=>x.type!=='advisory'||true))+foot:body;
+  $('infraNotices').innerHTML=n?noticeRows(n.items.filter(x=>x.type!=='advisory'))+foot:body;
+  $('mobNoticesTag').textContent=n?n.items.length+' ACTIVE':'—'; $('infraNoticesTag').textContent=n?n.items.filter(x=>x.type!=='advisory').length+' ACTIVE':'—';
+}
+function renderInfra(){
+  const hasInc=!!store.incidents;
+  $('infraNotice').innerHTML=`<b>What this is:</b> incident <b>reports</b> from TomTom's traffic feed (roadworks, closures, flooding…). They are <b>not</b> IoT sensor readings. No streetlight, water-supply or maintenance-ticket feed is connected for Chennai, and no failure-risk score is computed.`+(hasInc?'':` <b>Currently unavailable:</b> ${esc(store.meta.incErr||srcReason('traffic'))}`);
+  const R=(m,l,a)=>rcard(m,l,{srcId:'traffic',accent:a,reason:store.meta.incErr||srcReason('traffic')});
+  $('infra-cards').innerHTML=[R('inc_works','Roadworks Reports','var(--cyan)'),R('inc_closure','Road / Lane Closures','var(--red)'),R('inc_flood','Flooding Reports','var(--amber)'),R('inc_total','All Road Incident Reports','var(--violet)'),
+    ncard('Streetlights / Water Supply','No verified live feed configured')].join('');
+  const it=hasInc?store.incidents.items:[];
+  const cats={}; it.forEach(i=>{ const k=INC_CAT(i.category); cats[k]=(cats[k]||0)+1; });
+  const rows=Object.entries(cats).sort((a,b)=>b[1]-a[1]);
+  $('infraBars').innerHTML=hasInc?(rows.length?hbars(rows.map(([k,v])=>({label:k,value:v,max:rows[0][1],text:String(v),color:'var(--cyan)'}))):'<div class="na-box">No active incident reports returned for this area.</div>'):naBox(store.meta.incErr||srcReason('traffic'));
+  $('incTag').textContent=hasInc?`${it.length} REPORTED`:'—';
+  const sorted=it.slice().sort((a,b)=>(b.delaySec||0)-(a.delaySec||0)).slice(0,30);
+  renderTable('repairQueueTable',[
+    {label:'Category',render:r=>esc(INC_CAT(r.category))},
+    {label:'Description',render:r=>esc(r.description||'—')},
+    {label:'Location',render:r=>esc([r.from,r.to].filter(Boolean).join(' → ')||(r.roads||[]).join(', ')||'—')+(r.lat!=null?`<div style="color:var(--text-muted);font-size:10.5px">${r.lat.toFixed(4)}, ${r.lon.toFixed(4)}</div>`:'')},
+    {label:'Delay',render:r=>r.delaySec!=null?fmt(r.delaySec/60,1)+' min':'—'},
+    {label:'Starts',render:r=>r.startTime?esc(fmtTime(Date.parse(r.startTime),true)):'—'},
+    {label:'Ends',render:r=>r.endTime?esc(fmtTime(Date.parse(r.endTime),true)):'—'},
+    {label:'Status',render:r=>badge(r.timeValidity||'reported')},
+  ],sorted,hasInc?'No incidents reported in this area right now':'Unavailable — '+(store.meta.incErr||srcReason('traffic')));
+}
+function renderHuman(){
+  $('human-cards').innerHTML=[
+    ncard('Crowd Density','No crowd-count source connected'),ncard('Metro Usage','No passenger-count feed connected'),ncard('Bus Demand','No transit demand feed connected'),ncard('Event Alerts','No public-event feed connected'),
+    rcard('feels','Feels-like Temperature',{srcId:'weather',dp:1,accent:'var(--amber)'}),rcard('precip','Rainfall (demand context)',{srcId:'weather',dp:1,accent:'var(--cyan)'}),
+  ].join('');
+  const rows=[
+    ['Public transport service status','Unavailable','No verified Chennai Metro / MTC GTFS-Realtime feed has been configured.'],
+    ['Passenger counts','Unavailable','Not assumed to be published; no accessible feed verified.'],
+    ['Crowd density / station occupancy','Unavailable','No source configured — no crowd index is shown rather than inventing one.'],
+    ['Public events','Unavailable','No verified event feed configured.'],
+    ['Weather context (rain, heat)','Available','Live from Open-Meteo (model-based) — shown in the cards above.'],
+  ];
+  renderTable('humanAvail',[{label:'Capability',field:0},{label:'Status',render:r=>badge(r[1])},{label:'Detail',field:2}],rows);
+}
+function computeAlerts(){
+  const a=[], aqi=store.r.aqi, pr=store.r.precip;
+  if(aqi&&aqi.value>=101) a.push({scope:CFG.city.name,type:`US AQI ${fmt(aqi.value)} (${aqiBand(aqi.value)}) — model`,rule:'AQI ≥ 101',status:aqi.value>=151?'Critical':'Warning'});
+  if(pr&&pr.value>=2.5) a.push({scope:CFG.city.name,type:`Rain ${fmt(pr.value,1)} mm in preceding hour — model`,rule:'≥ 2.5 mm/h',status:'Warning'});
+  store.corridors.filter(c=>c.ok&&c.congestion>=40).forEach(c=>a.push({scope:c.name,type:`Heavy congestion ${fmt(c.congestion)}%`,rule:'congestion ≥ 40%',status:'Heavy'}));
+  ((store.notices&&store.notices.items)||[]).forEach(n=>a.push({scope:[n.road,n.area].filter(Boolean).join(' · ')||CFG.city.name,type:(n.type==='planned_work'?'Avoid route — planned work: ':'Authority-verified: ')+n.title+(n.alternative?` (try ${n.alternative})`:''),rule:'authority-approved notice',status:n.type==='planned_work'?'Warning':'Critical'}));
+  [['inc_acc','Accident reports'],['inc_closure','Road/lane closures'],['inc_flood','Flooding reports']].forEach(([m,l])=>{ const r=store.r[m]; if(r&&r.value>0) a.push({scope:CFG.city.name,type:`${fmt(r.value)} ${l}`,rule:'count > 0',status:m==='inc_flood'?'Critical':'Warning'}); });
+  return a;
+}
+function renderDash(){
+  $('dashSub').textContent=`Live readings — ${CFG.city.name} (${(+CFG.city.latitude).toFixed(4)}, ${(+CFG.city.longitude).toFixed(4)}) · ${CFG.city.timezone}`;
+  $('dash-cards').innerHTML=[
+    rcard('temp','Temperature',{srcId:'weather',dp:1,accent:'var(--red)'}),
+    rcard('aqi','US AQI',{srcId:'airQuality',accent:'var(--amber)',sub:r=>aqiBand(r.value)}),
+    rcard('cong','Congestion (derived)',{srcId:'traffic',accent:'var(--cyan)',sub:r=>congLabel(r.value)}),
+    rcard('inc_total','Road Incident Reports',{srcId:'traffic',accent:'var(--violet)',reason:store.meta.incErr||srcReason('traffic')}),
+  ].join('');
+  $('dashChartMain').innerHTML=tsChart(store.series.aqi,'airQuality','var(--green)');
+  const al=computeAlerts(); $('alertTag').textContent=al.length+' ACTIVE';
+  renderTable('alertsTable',[{label:'Scope',field:'scope'},{label:'Alert',field:'type'},{label:'Rule',field:'rule'},{label:'Status',render:r=>badge(r.status)}],al,'No alerts from current readings');
+}
+function renderStatus(){
+  const rows=Object.keys(SOURCES).map(id=>{ const s=store.src[id]; return {id,s}; });
+  const stLabel=s=>!CFG.sources.hasOwnProperty(s.id)?'':(!CFG.sources[s.id]?'Disabled':s.s.loading?'Loading':s.s.state==='ok'?'Live':s.s.state==='stale'?'Stale':s.s.state==='unavailable'?'Unavailable':s.s.state==='error'?'Error':'Idle');
+  renderTable('anaSources',[{label:'Source',render:r=>esc(SOURCES[r.id].label)},{label:'State',render:r=>badge(stLabel(r))},{label:'Last success',render:r=>r.s.lastOk?`${fmtTime(r.s.lastOk)} (${fmtAge(r.s.lastOk)})`:'never'},{label:'Interval',render:r=>(CFG.refreshSeconds[r.id]||0)+' s'},{label:'Message',render:r=>esc(r.s.err||'—')}],rows);
+}
+function derivedList(){
+  const r=store.r, out=[];
+  if(r.cong) out.push(['Mean congestion',fmt(r.cong.value,1)+' %','mean over segments of (1 − current ÷ free-flow speed) × 100, clamped 0–100',`${r.cong.note||''} TomTom`]);
+  if(r.speed) out.push(['Mean speed',fmt(r.speed.value,1)+' km/h','arithmetic mean of provider currentSpeed over valid segments',r.speed.note||'']);
+  if(r.aqi) out.push(['AQI category',aqiBand(r.aqi.value),'US EPA bands on provider-reported US AQI: ≤50, ≤100, ≤150, ≤200, ≤300, >300','Open-Meteo us_aqi']);
+  out.push(['Corridor status label','per segment','<20% free-flow · 20–40% moderate · ≥40% heavy (project-defined labels)','derived from congestion']);
+  return out;
+}
+function renderAnalytics(){
+  const rs=Object.values(store.r); $('anaTag').textContent=rs.length+' METRICS';
+  renderTable('anaReadings',[{label:'Metric',render:r=>esc(r.label)},{label:'Value',render:r=>esc((r.text!=null?r.text:fmt(r.value,r.unit==='%'||r.unit==='km/h'||r.unit==='AQI'||!r.unit?0:1))+(r.unit?' '+r.unit:''))},{label:'Type',render:r=>`<span class="tag ${TYPES[r.dataType][1]}">${TYPES[r.dataType][0]}</span>`},{label:'Source',render:r=>esc(r.source)},{label:'Observed',render:r=>(r.approxTime?'≈ ':'')+esc(fmtTime(r.observedAt,true))},{label:'Fetched',render:r=>esc(fmtTime(r.fetchedAt))},{label:'Status',render:r=>badge(readingStatus(r))}],rs,'No valid readings yet — see Source Freshness');
+  const ch=[]; [['temp','Temperature',1],['aqi','US AQI',0],['pm25','PM2.5',1]].forEach(([k,l,dp])=>{ const s=store.series[k]; if(s&&s.points.length>1){ const a=s.points[0],b=s.points[s.points.length-1],span=(b.t-a.t)/3.6e6; ch.push({l,a,b,span,unit:s.unit,dp}); }});
+  renderTable('anaChange',[{label:'Metric',render:r=>esc(r.l)},{label:'Then',render:r=>`${fmt(r.a.v,r.dp)} <span style="color:var(--text-muted)">${fmtTime(r.a.t,true)}</span>`},{label:'Now',render:r=>`${fmt(r.b.v,r.dp)} <span style="color:var(--text-muted)">${fmtTime(r.b.t,true)}</span>`},{label:`Δ over interval`,render:r=>`${(r.b.v-r.a.v>=0?'+':'')}${fmt(r.b.v-r.a.v,r.dp)} ${esc(r.unit)} (${fmt(r.span,0)} h)`}],ch,'Needs provider history — not available yet');
+  renderTable('anaDerived',[{label:'Indicator',field:0},{label:'Current value',field:1},{label:'Formula',field:2},{label:'Inputs',field:3}],derivedList(),'No derived indicators yet');
+  renderStatus();
+}
+
+/* ---------- What-If simulator ---------- */
+const MODEL = {
+  road_closure:{name:'Road closure', alpha:0.30, text:'Assumes 30% of the segment\'s remaining (unused) capacity is lost: c′ = c + (100 − c) × 0.30'},
+  heavy_rain:  {name:'Heavy rain',   alpha:0.20, pmWash:0.85, text:'Assumes 20% of remaining capacity is lost to rain: c′ = c + (100 − c) × 0.20; assumes 15% PM2.5 wash-out (×0.85)'},
+  festival:    {name:'Major public festival', alpha:0.35, text:'Assumes 35% of remaining capacity is lost to event traffic: c′ = c + (100 − c) × 0.35'},
+  new_metro:   {name:'Improved public transit', relCut:0.08, text:'Assumes 8% relative congestion reduction from mode shift: c′ = c × (1 − 0.08)'},
+};
+const GAMMA=0.20; /* assumed share of ambient PM2.5 that scales with traffic travel-time */
+function simBaseline(zoneName){
+  const z=CFG.zones.find(x=>x.name===zoneName)||{}, notes=[];
+  let cong=null,speed=null,free=null,scope=null,when=null;
+  const cor=z.corridor?store.corridors.find(c=>c.name===z.corridor&&c.ok&&c.congestion!=null):null;
+  if(cor){ cong=cor.congestion; speed=cor.currentSpeed; free=cor.freeFlowSpeed; scope=`${cor.name} segment (nearest monitored corridor to ${zoneName})`; when=store.r.cong?store.r.cong.observedAt:null; }
+  else if(store.r.cong&&store.r.speed&&store.r.freeflow){ cong=store.r.cong.value; speed=store.r.speed.value; free=store.r.freeflow.value; scope=`city-wide mean of sampled segments (no corridor mapped to ${zoneName})`; when=store.r.cong.observedAt; }
+  const zp=store.zones.find(x=>x.name===zoneName), pm=zp&&zp.pm25!=null?zp.pm25:(store.r.pm25?store.r.pm25.value:null);
+  return {cong,speed,free,scope,when,pm,pmWhen:store.r.pm25?store.r.pm25.observedAt:null,precip:store.r.precip};
+}
+function runSimulation(){
+  const sc=$('scenarioSelect').value, zone=$('zoneSelect').value, M=MODEL[sc], B=simBaseline(zone);
+  $('simTag').textContent=M.name.toUpperCase();
+  $('simBaseNote').innerHTML = `<b>Baseline</b> (measured/derived, ${B.cong!=null?'TomTom ≈'+fmtTime(B.when):'traffic unavailable'}; PM2.5 ${B.pm!=null?'Open-Meteo/CAMS '+fmtTime(B.pmWhen):'unavailable'}).<br>Traffic scope: ${esc(B.scope||'none')}.${B.precip?`<br>Current rainfall: ${fmt(B.precip.value,1)} ${esc(B.precip.unit)} (Open-Meteo model).`:''}<br><br>Results are <b>scenario estimates</b>, not observations.`;
+  const cards=[], bars=[]; let c2=null,s2=null,t0=null,t1=null;
+  if(B.cong!=null){
+    c2 = M.relCut!=null ? B.cong*(1-M.relCut) : B.cong+(100-B.cong)*M.alpha;
+    s2 = Math.max(5, B.free*(1-c2/100)); t0=600/B.speed; t1=600/s2; /* minutes for a 10 km trip */
+    const d=(a,b,dp,u)=>`Baseline ${fmt(a,dp)}${u} → ${(b-a>=0?'+':'')}${fmt(b-a,dp)}${u}`;
+    cards.push(simCard('Congestion',fmt(c2),'%',d(B.cong,c2,0,'%'),c2>B.cong?'var(--red)':'var(--green)'));
+    cards.push(simCard('Average Speed',fmt(s2),'km/h',d(B.speed,s2,0,''),s2<B.speed?'var(--red)':'var(--green)'));
+    cards.push(simCard('10 km Trip Time',fmt(t1,0),'min',d(t0,t1,0,' min'),t1>t0?'var(--red)':'var(--green)'));
+    bars.push({label:'Congestion % — baseline',value:B.cong,max:100,text:fmt(B.cong)+'%',color:'var(--cyan)'},{label:'Congestion % — projected',value:c2,max:100,text:fmt(c2)+'%',color:'var(--violet)'},
+      {label:'Speed — baseline',value:B.speed,max:B.free,text:fmt(B.speed)+' km/h',color:'var(--cyan)'},{label:'Speed — projected',value:s2,max:B.free,text:fmt(s2)+' km/h',color:'var(--violet)'});
+  } else { ['Congestion','Average Speed','10 km Trip Time'].forEach(l=>cards.push(simNA(l,'Missing baseline: live traffic (TomTom) — '+srcReason('traffic')))); }
+  if(B.pm!=null && c2!=null){
+    const f=(1+GAMMA*(t1/t0-1))*(M.pmWash||1), p2=B.pm*f;
+    cards.push(simCard('PM2.5',fmt(p2,1),'µg/m³',`Baseline ${fmt(B.pm,1)} → ${(p2-B.pm>=0?'+':'')}${fmt(p2-B.pm,1)}`,p2>B.pm?'var(--amber)':'var(--green)'));
+    const mx=Math.max(B.pm,p2); bars.push({label:'PM2.5 — baseline',value:B.pm,max:mx,text:fmt(B.pm,1),color:'var(--cyan)'},{label:'PM2.5 — projected',value:p2,max:mx,text:fmt(p2,1),color:'var(--violet)'});
+  } else cards.push(simNA('PM2.5',B.pm==null?'Missing baseline: PM2.5 (Open-Meteo air quality) — '+srcReason('airQuality'):'Needs traffic baseline for the traffic-linked term'));
+  $('simResults').innerHTML=cards.join('');
+  $('simChart').innerHTML=hbars(bars)||naBox('no baseline available');
+  $('simAssume').innerHTML=`<div class="notice" style="margin-bottom:0"><b>${esc(M.name)}:</b> ${esc(M.text)}.<br>Speed: v′ = free-flow × (1 − c′/100), floor 5 km/h. Trip time (10 km) = 600 ÷ v minutes.<br>PM2.5: p′ = p × (1 + ${GAMMA} × (T′/T − 1))${M.pmWash?' × '+M.pmWash:''}, where T is trip time and ${GAMMA} is an assumed traffic-linked share of ambient PM2.5.<br>Crowd, transit and noise effects are <b>not modelled</b> — no live baseline exists for them.<br><b>These parameters are modelling assumptions for demonstration; they are not calibrated or validated against real outcomes.</b></div>`;
+  return {scenario:sc,zone,baseline:B,projected:{cong:c2,speed:s2,tripMin:t1}};
+}
+const simCard=(l,v,u,sub,accent)=>`<div class="card" style="--accent:${accent}"><div class="card-label">${esc(l)}</div><div class="card-value">${esc(v)}<span class="unit">${esc(u)}</span></div><div class="card-delta flat">${esc(sub)}</div>${metaHTML('proj')}</div>`;
+const simNA=(l,why)=>ncard(l,why);
+
+/* ---------- reports ---------- */
+let lastReport=null;
+function buildReport(){
+  const now=Date.now(), c=CFG.city, rs=Object.values(store.r), md=[];
+  md.push(`# CityPulse Current-State Report`,`**City:** ${c.name} (${c.latitude}, ${c.longitude}) · **Timezone:** ${c.timezone}`,`**Generated:** ${fmtTime(now,true)} (${c.timezone})`,'');
+  md.push(`> Current-state report. Historical analysis is included only where a provider returned history (Open-Meteo 24 h hourly model series).`,'','## Data sources');
+  Object.keys(SOURCES).forEach(id=>{ const s=store.src[id]; md.push(`- ${SOURCES[id].label}: ${!CFG.sources[id]?'disabled':s.state}; last success ${s.lastOk?fmtTime(s.lastOk,true):'never'}${s.err?'; message: '+s.err:''}`); });
+  md.push('','## Readings','| Metric | Value | Type | Source | Observed | Status |','|---|---|---|---|---|---|');
+  rs.forEach(r=>md.push(`| ${r.label} | ${r.text!=null?r.text:fmt(r.value,1)} ${r.unit} | ${TYPES[r.dataType][0]} | ${r.source} | ${r.approxTime?'≈ ':''}${fmtTime(r.observedAt,true)} | ${readingStatus(r)} |`));
+  if(!rs.length) md.push('| _No valid readings available_ | | | | | |');
+  md.push('','## Derived calculations'); const dl=derivedList(); dl.forEach(d=>md.push(`- **${d[0]}** = ${d[1]} — ${d[2]}`)); if(!dl.length) md.push('- none');
+  md.push('','## 24 h change (provider series)'); let any=false;
+  [['temp','Temperature'],['aqi','US AQI'],['pm25','PM2.5']].forEach(([k,l])=>{ const s=store.series[k]; if(s&&s.points.length>1){ any=true; const a=s.points[0],b=s.points[s.points.length-1]; md.push(`- ${l}: ${fmt(a.v,1)} (${fmtTime(a.t,true)}) → ${fmt(b.v,1)} (${fmtTime(b.t,true)}) ${s.unit}, model data`); }});
+  if(!any) md.push('- No provider history available.');
+  if(store.incidents){ md.push('','## Road incident reports (TomTom, reports not sensors)'); store.incidents.items.slice(0,25).forEach(i=>md.push(`- ${INC_CAT(i.category)}: ${i.description||'no description'} (${[i.from,i.to].filter(Boolean).join(' → ')||'location n/a'})`)); }
+  const warn=[]; Object.keys(SOURCES).forEach(id=>{ const s=store.src[id]; if(CFG.sources[id]&&s.state!=='ok') warn.push(`${SOURCES[id].label}: ${s.state}${s.err?' — '+s.err:''}`); });
+  md.push('','## Missing / stale data warnings'); (warn.length?warn:['none']).forEach(w=>md.push('- '+w));
+  md.push('- Not available: crowd density, passenger counts, transit status, noise, utility-outage and asset-health feeds (no verified source configured).','','_Attribution: Weather & air quality © Open-Meteo.com, CAMS ENSEMBLE data provider; traffic data © TomTom._');
+  lastReport={markdown:md.join('\n'), json:{generatedAt:new Date(now).toISOString(), city:c, readings:rs, sources:Object.fromEntries(Object.keys(SOURCES).map(id=>[id,{state:store.src[id].state,lastOk:store.src[id].lastOk,error:store.src[id].err}])), seriesPoints:Object.fromEntries(Object.entries(store.series).filter(([,v])=>v).map(([k,v])=>[k,v.points.length]))}};
+  $('reportPre').textContent=lastReport.markdown; return lastReport;
+}
+function download(name,text,type){ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([text],{type})); a.download=name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),1000); }
+
+/* ---------- top bar: live status & pulse strip ---------- */
+function overall(){
+  const en=Object.keys(SOURCES).filter(id=>CFG.sources[id]), ss=en.map(id=>store.src[id]);
+  if(!en.length) return 'off'; if(ss.some(s=>s.loading&&!s.lastOk)) return 'load';
+  if(ss.every(s=>s.state==='ok')) return 'ok'; if(ss.some(s=>s.state==='ok'||s.state==='stale')) return 'stale'; return 'err';
+}
+function renderChip(){
+  const o=overall(), dot=document.querySelector('.pulse-dot'); dot.className='pulse-dot'+({load:' load',stale:' stale',err:' err'}[o]||'');
+  const last=Math.max(0,...Object.values(store.src).map(s=>s.lastOk||0)), busy=Object.values(store.src).some(s=>s.loading);
+  $('liveChip').textContent=(busy?'Fetching… · ':'')+(o==='err'?'No live data':o==='off'?'All sources off':(o==='stale'?'Partial/stale · ':'Live · ')+'updated '+fmtAge(last));
+  const rb=$('refreshBtn'); rb.disabled=busy; rb.textContent=busy?'Refreshing…':'Refresh';
+}
+function drawPulse(){
+  const svg=$('livePulse'), s=store.series.temp, w=300,h=34,pad=3;
+  if(!s||s.points.length<2){ svg.innerHTML=`<line x1="0" y1="17" x2="300" y2="17" stroke="#6B7A99" stroke-width="1.4" stroke-dasharray="4 4"/>`; return; }
+  const d=s.points.map(p=>p.v),mx=Math.max(...d),mn=Math.min(...d),st=(w-pad*2)/(d.length-1);
+  svg.innerHTML=`<polyline points="${d.map((v,i)=>[pad+i*st,pad+(h-pad*2)-((v-mn)/((mx-mn)||1))*(h-pad*2)].join(',')).join(' ')}" fill="none" stroke="#22D3EE" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><title>Temperature, last 24h (Open-Meteo model)</title></polyline>`;
+}
+
+/* ---------- dispatch ---------- */
+function onUpdate(id){
+  if(id==='weather'){ renderEnv(); renderDash(); renderHuman(); drawPulse(); }
+  if(id==='airQuality'){ renderEnv(); renderDash(); }
+  if(id==='traffic'){ renderMob(); renderInfra(); renderDash(); }
+  if(id==='notices'){ renderNotices(); renderMob(); renderDash(); }
+  renderAnalytics(); renderChip(); runSimulation();
+}
+function renderAll(){ renderNotices(); renderDash(); renderMob(); renderEnv(); renderInfra(); renderHuman(); renderAnalytics(); runSimulation(); drawPulse(); renderChip(); }
+
+/* ---------- navigation & wiring ---------- */
+const titles={dashboard:['City Overview','Live readings across city systems'],mobility:['Mobility Intelligence','Traffic flow & incident reports'],environment:['Environmental Intelligence','Weather & air quality (model-based)'],infrastructure:['Infrastructure Health','Provider incident reports'],human:['Human Activity','Public-demand data availability'],simulator:['What-If Simulator','Scenario projection from live baseline'],analytics:['Analytics','Readings, freshness & derived indicators'],reports:['Reports','Current-state report from available data'],settings:['Settings','City, refresh & sources']};
+document.querySelectorAll('.nav-item').forEach(item=>item.addEventListener('click',()=>{
+  document.querySelectorAll('.nav-item').forEach(i=>i.classList.remove('active')); item.classList.add('active');
+  const sec=item.dataset.section; document.querySelectorAll('.section').forEach(s=>s.classList.remove('active')); $(sec).classList.add('active');
+  $('pageTitle').textContent=titles[sec][0]; $('pageSub').textContent=titles[sec][1]; if(sec==='settings') loadHealth();
+}));
+$('refreshBtn').addEventListener('click',refreshAll);
+$('runSim').addEventListener('click',runSimulation); $('scenarioSelect').addEventListener('change',runSimulation); $('zoneSelect').addEventListener('change',runSimulation);
+$('genReport').addEventListener('click',buildReport);
+$('dlMd').addEventListener('click',()=>{ const r=buildReport(); download('citypulse-report.md',r.markdown,'text/markdown'); });
+$('dlJson').addEventListener('click',()=>{ const r=buildReport(); download('citypulse-report.json',JSON.stringify(r.json,null,2),'application/json'); });
+
+function fillSettings(){
+  $('setCity').value=CFG.city.name; $('setTz').value=CFG.city.timezone; $('setLat').value=CFG.city.latitude; $('setLon').value=CFG.city.longitude;
+  $('setRw').value=CFG.refreshSeconds.weather; $('setRa').value=CFG.refreshSeconds.airQuality; $('setRt').value=CFG.refreshSeconds.traffic; $('setApi').value=apiBase();
+  $('setEw').checked=!!CFG.sources.weather; $('setEa').checked=!!CFG.sources.airQuality; $('setEt').checked=!!CFG.sources.traffic; $('setEn').checked=!!CFG.sources.notices;
+}
+$('saveSet').addEventListener('click',()=>{
+  const lat=parseFloat($('setLat').value), lon=parseFloat($('setLon').value);
+  if(!(lat>=-90&&lat<=90&&lon>=-180&&lon<=180)){ alert('Latitude/longitude out of range'); return; }
+  try{ new Intl.DateTimeFormat('en',{timeZone:$('setTz').value}); }catch{ alert('Unknown IANA timezone'); return; }
+  const ov={city:{...CFG.city,name:$('setCity').value.trim()||CFG.city.name,timezone:$('setTz').value.trim(),latitude:lat,longitude:lon},
+    refreshSeconds:{weather:Math.max(300,+$('setRw').value||600),airQuality:Math.max(300,+$('setRa').value||900),traffic:Math.max(120,+$('setRt').value||300),notices:CFG.refreshSeconds.notices||60},
+    sources:{weather:$('setEw').checked,airQuality:$('setEa').checked,traffic:$('setEt').checked,notices:$('setEn').checked}, apiBase:$('setApi').value.trim()};
+  try{ localStorage.setItem('cp_cfg',JSON.stringify(ov)); }catch{}
+  Object.assign(CFG,ov); resetStore(); fillSettings(); renderAll(); startAll();
+});
+$('resetSet').addEventListener('click',()=>{ try{ localStorage.removeItem('cp_cfg'); }catch{} location.reload(); });
+async function loadHealth(){
+  const el=$('keyStatus');
+  try{ const h=await getJson(apiBase()+'/api/health',4000); el.innerHTML=h.tomtomKeyConfigured?'<b>Backend reachable.</b> TomTom key is configured on the server (the key itself is never sent to this page).':'<b>Backend reachable, but TOMTOM_API_KEY is not set.</b> Copy .env.example to .env and add a key; traffic &amp; incidents stay Unavailable until then.'; }
+  catch{ el.innerHTML='<b>Backend not reachable</b> at '+esc(apiBase()||'this origin')+'. Start it with <b>node server.js</b>. Weather and air quality work without it; traffic and incidents show Unavailable.'; }
+}
+
+/* ---------- boot ---------- */
+async function boot(){
+  let local=null; try{ local=JSON.parse(localStorage.getItem('cp_cfg')||'null'); }catch{}
+  try{ const r=await getJson((local&&local.apiBase!=null?local.apiBase:(location.protocol==='file:'?'http://localhost:3000':''))+'/api/config',3000); if(r&&r.city&&r.zones&&r.corridors){ CFG=Object.assign(CFG,r); store.backendUp=true; } }catch{}
+  if(local){ if(local.city) CFG.city=local.city; if(local.refreshSeconds) CFG.refreshSeconds=local.refreshSeconds; if(local.sources) CFG.sources=local.sources; if(local.apiBase!=null) CFG.apiBase=local.apiBase; }
+  $('zoneSelect').innerHTML=CFG.zones.map(z=>`<option>${esc(z.name)}</option>`).join('');
+  fillSettings(); renderAll(); startAll();
+  setInterval(()=>{ $('clock').textContent=new Date().toLocaleTimeString('en-IN',{hour12:false,timeZone:CFG.city.timezone}); renderChip(); },1000);
+}
+boot();
+</script>
+</body>
+</html>
