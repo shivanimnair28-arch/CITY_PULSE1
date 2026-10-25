@@ -24,8 +24,8 @@ async function boot(router){
 }
 (async()=>{
   console.log('Server parsers'); 
-  const f=parseFlow({name:'X',lat:1,lon:2},{flowSegmentData:{currentSpeed:25,freeFlowSpeed:50,currentTravelTime:100,freeFlowTravelTime:50,confidence:.9,roadClosure:false,coordinates:{coordinate:[{latitude:13.1,longitude:80.2}]}}});
-  ok(f.currentSpeed===25&&f.matched.lat===13.1,'parseFlow maps TomTom flowSegmentData fields');
+  const f=parseFlow({name:'X',lat:1,lon:2},{flowSegmentData:{currentSpeed:25,freeFlowSpeed:50,currentTravelTime:100,freeFlowTravelTime:50,confidence:.9,roadClosure:false,coordinates:{coordinate:[{latitude:13.1,longitude:80.2},{latitude:1.002,longitude:2.002},{latitude:1.02,longitude:2.02}]}}});
+  ok(f.currentSpeed===25&&f.matched.lat===1.002,'parseFlow selects the segment coordinate nearest the requested corridor');
   const inc=parseIncidents({incidents:[{geometry:{type:'LineString',coordinates:[[80.2,13.0],[80.21,13.01]]},properties:{id:'a',iconCategory:'RoadWorks',events:[{description:'Roadworks'}],from:'P',to:'Q',delay:60}}]});
   ok(inc[0].category==='RoadWorks'&&inc[0].lat===13&&inc[0].lon===80.2,'parseIncidents extracts category, description and first coordinate');
   let threw=false; try{ parseIncidents({}); }catch{ threw=true; } ok(threw,'parseIncidents rejects malformed payload');

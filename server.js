@@ -1,4 +1,4 @@
-// CityPulse backend: zero dependencies (Node 18+). Serves the dashboard and proxies TomTom so the key stays private.
+// CityPulse backend (Node 18+). Serves the dashboard and proxies TomTom so the key stays private.
 const http = require('http'), fs = require('fs'), path = require('path');
 try { for (const l of fs.readFileSync(path.join(__dirname, '.env'), 'utf8').split(/\r?\n/)) {
   const m = l.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*?)\s*$/); if (m && !l.trim().startsWith('#') && !(m[1] in process.env)) process.env[m[1]] = m[2]; } } catch {}
@@ -22,8 +22,13 @@ function parseFlow(c, j) {
   const f = j && j.flowSegmentData; if (!f) throw new Error('no flowSegmentData');
   const n = (v) => (typeof v === 'number' && isFinite(v) ? v : null);
   const pts = f.coordinates && f.coordinates.coordinate;
+  const matchedPoint = Array.isArray(pts) ? pts.filter((p) => Number.isFinite(p.latitude) && Number.isFinite(p.longitude))
+    .reduce((best, p) => {
+      const distance = (q) => Math.hypot(q.latitude - c.lat, (q.longitude - c.lon) * Math.cos(c.lat * Math.PI / 180));
+      return !best || distance(p) < distance(best) ? p : best;
+    }, null) : null;
   return { name: c.name, ok: true, requested: { lat: c.lat, lon: c.lon },
-    matched: pts && pts[0] ? { lat: pts[0].latitude, lon: pts[0].longitude } : null,
+    matched: matchedPoint ? { lat: matchedPoint.latitude, lon: matchedPoint.longitude } : null,
     currentSpeed: n(f.currentSpeed), freeFlowSpeed: n(f.freeFlowSpeed),
     currentTravelTime: n(f.currentTravelTime), freeFlowTravelTime: n(f.freeFlowTravelTime),
     confidence: n(f.confidence), roadClosure: !!f.roadClosure, frc: f.frc || null };

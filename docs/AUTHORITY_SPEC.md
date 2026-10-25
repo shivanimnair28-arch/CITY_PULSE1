@@ -17,11 +17,14 @@
 |---|---|---|
 | `POST /api/reports` | public | anonymous; honeypot; 5/hour/IP; no personal data stored |
 | `GET /api/public/notices` | public | approved + active only; hides permitRef, notes, reviewer |
-| `POST /api/admin/login` | — | refused (503) unless ADMIN_USER/ADMIN_PASSWORD set; 10 tries/15 min |
-| `GET /api/admin/reports?state=` | admin | |
+| `POST /api/admin/login` | — | refused (503) unless ADMIN_USER/ADMIN_PASSWORD set; optional VIEWER_USER/VIEWER_PASSWORD; passwords are scrypt-hashed in SQLite; 10 tries/15 min |
+| `GET /api/admin/reports?state=` | admin, viewer | |
 | `POST /api/admin/reports/:id/decision` | admin | `decision`: approve/reject/request_changes/review; planned_work approval needs `permitVerified:true` |
 | `POST /api/admin/reports/:id/close` | admin | `action`: resolve/cancel |
-| `GET /api/admin/audit` | admin | |
+| `GET /api/admin/audit` | admin, viewer | |
+| `GET /api/admin/workflow-metrics` | admin, viewer | approval rate and mean time-to-approve, each with its sample size |
+
+`approvalRate` is approved reports divided by approved + rejected reports; `averageTimeToApproveMs` is the mean of `approvedAt - createdAt` for successfully approved reports. Sample counts are returned separately; rates/times are `null` when the corresponding sample is empty.
 
 ## Rules / honesty
 - The permit reference is free text checked **by a human**; the system does not verify it against any government database.
@@ -29,4 +32,6 @@
 - Public pages label content "Authority-verified (simulated role)".
 
 ## Backlog (T1/T4, in priority order)
-1. SQLite instead of `db.json`  2. Viewer vs admin roles, password hashing (scrypt)  3. Photo attachment (size/type checked)  4. CAPTCHA  5. Notices as optional simulator input ("apply this closure")  6. Workflow metrics endpoint for T2 (time-to-approve, approval rate)
+1. ~~SQLite instead of `db.json`~~  2. ~~Viewer vs admin roles, password hashing (scrypt)~~  3. Photo attachment (size/type checked)  4. CAPTCHA  5. Notices as optional simulator input ("apply this closure")  6. ~~Workflow metrics endpoint for T2 (time-to-approve, approval rate)~~
+
+The server stores new data in `admin/data/authority.sqlite` and migrates the existing `admin/data/db.json` on first startup. The authority console currently shows review controls to any logged-in account; API authorization remains authoritative, so viewer accounts receive `403` for write requests. The UI should hide those controls for viewers.

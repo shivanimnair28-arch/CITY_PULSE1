@@ -18,6 +18,19 @@ Dashboard polling: 600 s / 900 s / 300 s (configurable; minimums 300 / 300 / 120
 ## Not connected (no verified feed) — shown as Unavailable
 Noise levels · public transport status & passenger counts · crowd density/station occupancy · public events · streetlight/water/power outage data · asset-health or failure-risk scoring. Candidates to investigate: Chennai Metro / MTC open data or GTFS-Realtime, Greater Chennai Corporation / data.gov.in feeds, OpenAQ or CPCB for sensor-based air quality.
 
+## T1 source investigation (checked 2026-10-25)
+
+This is a discovery check, not evidence that the agencies have no feeds.
+
+| Candidate | Official page checked | Finding |
+|---|---|---|
+| OpenAQ | [API documentation](https://docs.openaq.org/) | Documents geographic and measurement queries. No Chennai station/parameter response was verified in this check; do not label the CAMS model values as sensor data. |
+| CPCB | [CPCB website](https://cpcb.gov.in/) | The landing page was reachable, but this check did not identify a documented, directly queryable Chennai station API/feed. |
+| Chennai Metro Rail | [CMRL website](https://chennaimetrorail.org/) | Official website checked; no public real-time feed or GTFS endpoint was verified. |
+| Metropolitan Transport Corporation | [MTC website](https://mtcbus.tn.gov.in/) | Website advertises live tracking services for users, but no public API/GTFS-Realtime endpoint was verified. Do not ingest website UI data as an open feed. |
+
+Next checks: obtain a station-level OpenAQ/CPCB response with timestamp, Chennai station identity and units; ask MTC/CMRL for an official feed or documented GTFS endpoint. Until then, sensor air quality and transit data remain unavailable.
+
 ## Live verification checklist (not yet executed from the build sandbox)
 1. `curl "https://api.open-meteo.com/v1/forecast?latitude=13.0827&longitude=80.2707&current=temperature_2m&timeformat=unixtime"` returns `current.time`.
 2. `curl "https://air-quality-api.open-meteo.com/v1/air-quality?latitude=13.0827&longitude=80.2707&current=us_aqi,pm2_5"` returns values.

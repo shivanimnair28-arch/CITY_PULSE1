@@ -15,9 +15,9 @@ flowchart LR
   end
   subgraph Auth["Authority server :4000 (admin/server.js)"]
     A1["POST /api/reports (anonymous, rate-limited)"]
-    A2["Admin API: login, review, approve/reject, close, audit"]
+    A2["Admin/viewer API: login, review, approve/reject, close, audit, workflow metrics"]
     A3["GET /api/public/notices (approved + active only)"]
-    DB[("db.json -> SQLite (T1)")]
+    DB[("authority.sqlite")]
   end
   subgraph Web["Browser dashboard (project_citypulse.html)"]
     DL["Shared data layer: pollers, validation, normalised readings, trust score"]
